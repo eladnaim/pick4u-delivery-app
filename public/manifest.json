@@ -1,0 +1,108 @@
+{
+  "name": "Pick4U - איסוף חבילות קהילתי",
+  "short_name": "Pick4U",
+  "description": "הפתרון החברתי לאיסוף חבילות ודואר - חבר בין מי שצריך לאסוף למי שיכול לעזור",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#3B82F6",
+  "theme_color": "#3B82F6",
+  "orientation": "portrait",
+  "scope": "/",
+  "lang": "he",
+  "dir": "rtl",
+  "categories": ["lifestyle", "utilities", "social"],
+  "icons": [
+    {
+      "src": "/icons/icon-72x72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-128x128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-144x144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-152x152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-384x384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/home-mobile.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "דף הבית - Pick4U"
+    },
+    {
+      "src": "/screenshots/chat-mobile.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "צ'אט ותיאום משלוחים"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "בקש איסוף",
+      "short_name": "בקש איסוף",
+      "description": "צור בקשת איסוף חדשה",
+      "url": "/?tab=request",
+      "icons": [
+        {
+          "src": "/icons/shortcut-request.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "מאסף באזור",
+      "short_name": "מאסף",
+      "description": "ראה בקשות איסוף באזור",
+      "url": "/?tab=collect",
+      "icons": [
+        {
+          "src": "/icons/shortcut-collect.png",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false
+}
