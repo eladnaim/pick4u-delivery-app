@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { pickupService, PickupRequest } from '../services/pickupService';
 import { useAuth } from './useAuth';
+import { DocumentData } from 'firebase/firestore';
 
 export const usePickupRequests = (city?: string, community?: string) => {
   const [requests, setRequests] = useState<PickupRequest[]>([]);
@@ -53,7 +54,7 @@ export const usePickupRequests = (city?: string, community?: string) => {
     }
   };
 
-  const updateStatus = async (requestId: string, status: PickupRequest['status'], additionalData?: any) => {
+  const updateStatus = async (requestId: string, status: PickupRequest['status'], additionalData?: DocumentData) => {
     try {
       setError(null);
       await pickupService.updateRequestStatus(requestId, status, additionalData);

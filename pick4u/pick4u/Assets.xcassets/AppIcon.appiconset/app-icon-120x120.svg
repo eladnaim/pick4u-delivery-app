@@ -1,0 +1,33 @@
+<svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4F46E5;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#7C3AED;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="boxGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#F59E0B;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#D97706;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background with rounded corners -->
+  <rect width="120" height="120" rx="26" ry="26" fill="url(#bgGradient)"/>
+  
+  <!-- Delivery box -->
+  <rect x="35" y="45" width="35" height="25" rx="3" ry="3" fill="url(#boxGradient)" stroke="#92400E" stroke-width="1"/>
+  
+  <!-- Box tape/cross -->
+  <line x1="35" y1="57.5" x2="70" y2="57.5" stroke="#92400E" stroke-width="2"/>
+  <line x1="52.5" y1="45" x2="52.5" y2="70" stroke="#92400E" stroke-width="2"/>
+  
+  <!-- Hand holding the box -->
+  <ellipse cx="45" cy="75" rx="12" ry="8" fill="#FBBF24" stroke="#F59E0B" stroke-width="1"/>
+  
+  <!-- Speed lines -->
+  <line x1="75" y1="50" x2="85" y2="48" stroke="#E5E7EB" stroke-width="2" stroke-linecap="round"/>
+  <line x1="75" y1="57" x2="88" y2="55" stroke="#E5E7EB" stroke-width="2" stroke-linecap="round"/>
+  <line x1="75" y1="64" x2="85" y2="62" stroke="#E5E7EB" stroke-width="2" stroke-linecap="round"/>
+  
+  <!-- "4U" text -->
+  <text x="60" y="95" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="white" text-anchor="middle">4U</text>
+</svg>

@@ -57,6 +57,7 @@
     "next-themes": "^0.4.6",
     "prismjs": "^1.29.0",
     "react": "^19.1.1",
+    "react-adsense": "^0.1.0",
     "react-day-picker": "^9.9.0",
     "react-dom": "^19.1.1",
     "react-dropzone": "^14.2.3",
@@ -95,6 +96,7 @@
     "tailwindcss": "^3.4.11",
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.0.1",
-    "vite": "^5.4.1"
+    "vite": "^5.4.1",
+    "vite-tsconfig-paths": "^5.1.4"
   }
 }

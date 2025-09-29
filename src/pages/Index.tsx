@@ -1,21 +1,126 @@
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Package, Users, MessageCircle, Star, Shield, MapPin, Bell, Navigation, Search, Truck, LogOut } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Package, Truck, Search, Users, LogOut, MessageCircle, MapPin, Star, Shield, Key, UserPlus, User as UserIcon, Edit3, Send, CheckCircle, Car } from 'lucide-react';
+import { toast } from 'sonner';
 import UserRegistration from '@/components/UserRegistration';
 import LoginForm from '@/components/LoginForm';
 import PickupRequest from '@/components/PickupRequest';
-import CollectorDashboard from '@/components/CollectorDashboard';
+import AdBanner from '@/components/AdBanner';
+import BottomAdBanner from '@/components/BottomAdBanner';
 import ChatInterface from '@/components/ChatInterface';
+import CollectorDashboard from '@/components/CollectorDashboard';
 import UserProfile from '@/components/UserProfile';
+import { usePickupRequests } from '@/hooks/usePickupRequests';
+import { notificationService } from '@/services/notificationService';
+import type { User, Chat, PickupRequest as PickupRequestType } from '@/types';
 import NotificationsTab from '@/components/NotificationsTab';
-import { User } from '@/types';
+import Chats from '@/pages/Chats';
 
 export default function Index() {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(() => {
+    // טוען את פרטי המשתמש מ-localStorage בעת טעינת הקומפוננטה
+    const savedUser = localStorage.getItem('currentUser');
+    return savedUser ? JSON.parse(savedUser) : null;
+  });
   const [activeTab, setActiveTab] = useState('home');
-  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('register');
+  
+  // פונקציה לעדכון המשתמש הנוכחי ושמירתו ב-localStorage
+  const updateCurrentUser = (user: User | null) => {
+    setCurrentUser(user);
+    if (user) {
+      localStorage.setItem('currentUser', JSON.stringify(user));
+    } else {
+      localStorage.removeItem('currentUser');
+    }
+  };
+
+  // Chat state - using partial type for chat context
+  const [chatPickupRequest, setChatPickupRequest] = useState<Partial<PickupRequestType> | null>(null);
+  const [activeChat, setActiveChat] = useState<Chat | null>(null);
+  const [showChat, setShowChat] = useState(false);
+  
+  // Requests hook and locked deals map
+  const { acceptRequest } = usePickupRequests(currentUser?.city, currentUser?.community);
+  const [lockedDeals, setLockedDeals] = useState<Record<string, boolean>>({});
+  
+  // State for pickup requests notifications
+  const [pickupRequests, setPickupRequests] = useState<PickupRequestType[]>([]);
+  
+  useEffect(() => {
+    (async () => {
+      if (currentUser?.id) {
+        // Initialize push notifications and save token
+        await notificationService.initializePushNotifications(currentUser.id);
+      }
+    })();
+  }, [currentUser?.id]);
+
+  const handleRequestSubmit = (request: PickupRequestType) => {
+    // הוספת הבקשה לרשימת הבקשות
+    setPickupRequests(prev => [...prev, request]);
+    
+    // מעבר ללשונית התרעות
+    setActiveTab('notifications');
+    
+    // הצגת הודעת הצלחה
+    toast.success('בקשת האיסוף נוספה בהצלחה!');
+  };
+
+  const handleOpenChat = (req: { id: string; title: string; userId: string; suggestedPrice?: number }) => {
+    if (!currentUser) return;
+
+    const newChat: Chat = {
+      id: `chat_${req.id}_${currentUser.id}`,
+      participants: [currentUser.id, req.userId],
+      pickupRequestId: req.id,
+      createdAt: new Date().toISOString(),
+    };
+
+    setActiveChat(newChat);
+    setChatPickupRequest({
+      id: req.id,
+      title: req.title,
+      suggestedPrice: req.suggestedPrice,
+    });
+    setShowChat(true);
+  };
+
+  const handleNotificationAction = (payload: { type: 'open_chat' | 'open_collect' | 'view_rating' | 'accept_request'; notificationId: string; pickupRequestId?: string }) => {
+    switch (payload.type) {
+      case 'open_chat': {
+        if (payload.pickupRequestId) {
+          const req = pickupRequests.find(r => r.id === payload.pickupRequestId);
+          if (req) {
+            handleOpenChat({ id: req.id, title: req.title, suggestedPrice: req.suggestedPrice, userId: req.requesterId });
+          }
+        }
+        break;
+      }
+      case 'open_collect': {
+        setActiveTab('request');
+        toast.success('פותח טופס בקשת איסוף...');
+        break;
+      }
+      case 'accept_request': {
+        if (payload.pickupRequestId) {
+          setLockedDeals(prev => ({ ...prev, [payload.pickupRequestId!]: true }));
+          toast.success('הבקשה התקבלה! פותח צ׳אט לתיאום...');
+          const req = pickupRequests.find(r => r.id === payload.pickupRequestId);
+          if (req) {
+            handleOpenChat({ id: req.id, title: req.title, suggestedPrice: req.suggestedPrice, userId: req.requesterId });
+          }
+        }
+        break;
+      }
+      case 'view_rating': {
+        setActiveTab('home');
+        break;
+      }
+    }
+  };
 
   const features = [
     {
@@ -26,12 +131,12 @@ export default function Index() {
     {
       icon: Users,
       title: 'רשת קהילתית',
-      description: 'התחבר לקהילה המקומית שלך לשירות מהיר ואמין'
+      description: 'התחבר לקהילה הקומית שלך לשירות מהיר ואמין'
     },
     {
       icon: MessageCircle,
       title: 'תקשורת ישירה',
-      description: 'צ\'אט עם המאסף לתיאום פרטים ועלויות'
+      description: "צ'אט עם המאסף לתיאום פרטים ועלויות"
     },
     {
       icon: Shield,
@@ -52,42 +157,90 @@ export default function Index() {
 
   if (!currentUser) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50" dir="rtl">
-        {/* Hero Section */}
-        <div className="container mx-auto px-4 py-16">
-          <div className="text-center mb-16">
+      <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50" dir="rtl">
+        {/* Background Illustration */}
+        <div
+          aria-hidden
+          className="absolute inset-0 bg-[url('/images/social-pickup-ios.svg')] bg-cover bg-center opacity-20"
+        />
+
+        {/* Hero + Auth Top */}
+        <div className="relative z-10 container mx-auto px-4 py-16">
+          <div className="text-center mb-10">
             <div className="mb-8">
-              <h1 className="text-7xl font-bold bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent mb-4">
+              <h1 className="text-7xl font-bold bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent mb-4" dir="rtl">
                 Pick4U
               </h1>
               <div className="w-24 h-1 bg-gradient-to-r from-blue-600 to-indigo-600 mx-auto rounded-full"></div>
             </div>
-            <p className="text-xl text-gray-700 mb-8 max-w-2xl mx-auto leading-relaxed">
-              הפתרון החברתי לאיסוף חבילות ודואר - חבר בין מי שצריך לאסוף למי שיכול לעזור
+            <h2 className="text-2xl font-semibold text-gray-800 mb-4" dir="rtl">הפתרון החברתי של הקהילה</h2>
+            <p className="text-xl text-gray-700 mb-8 max-w-2xl mx-auto leading-relaxed" dir="rtl">
+              הפתרון חברתי של הקהילה לאיסוף החבילות
             </p>
-            <div className="flex gap-4 justify-center flex-wrap">
+            <div className="flex gap-6 justify-center flex-wrap">
               <Button 
                 size="lg" 
-                className="text-lg px-8 py-6 h-14 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105"
-                onClick={() => setAuthMode('login')}
+                className="text-xl px-10 py-7 h-16 rounded-3xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-110 text-white font-extrabold"
+                onClick={() => {
+                  setAuthMode('login');
+                  const el = document.getElementById('auth-top');
+                  if (el) el.scrollIntoView({ behavior: 'smooth' });
+                }}
               >
+                <Key className="w-6 h-6 ml-3" />
                 התחבר
               </Button>
               <Button 
                 variant="outline" 
                 size="lg" 
-                className="text-lg px-8 py-6 h-14 rounded-2xl border-2 border-blue-200 hover:border-blue-300 bg-white/80 backdrop-blur-sm hover:bg-white shadow-lg hover:shadow-xl transition-all duration-300"
-                onClick={() => setAuthMode('register')}
+                className="text-xl px-10 py-7 h-16 rounded-3xl border-4 border-blue-400 hover:border-blue-500 bg-white/90 backdrop-blur-sm hover:bg-white shadow-2xl hover:shadow-3xl transition-all duration-300 text-blue-700 font-extrabold hover:text-blue-800 transform hover:scale-110"
+                onClick={() => {
+                  setAuthMode('register');
+                  const el = document.getElementById('auth-top');
+                  if (el) el.scrollIntoView({ behavior: 'smooth' });
+                }}
               >
+                <UserPlus className="w-6 h-6 ml-3" />
                 הצטרף עכשיו
               </Button>
             </div>
           </div>
 
+          {/* Auth Section (Top) */}
+          <div id="auth-top" className="max-w-md mx-auto mb-16">
+            {authMode === 'login' ? (
+              <LoginForm 
+                onLogin={updateCurrentUser}
+                onSwitchToRegister={() => setAuthMode('register')}
+              />
+            ) : (
+              <Card className="backdrop-blur-xl bg-white/90 border-0 shadow-2xl rounded-3xl">
+                <CardHeader className="text-center">
+                  <CardTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                    הצרפות לקהילת Pick4U
+                  </CardTitle>
+                  <CardDescription className="text-gray-600">
+                    הרשמה מהירה וקלה - רק הפרטים החיוניים
+                  </CardDescription>
+                  <Button
+                    variant="ghost"
+                    onClick={() => setAuthMode('login')}
+                    className="text-blue-600 hover:text-blue-700 underline"
+                  >
+                    כבר יש לך חשבון? התחבר/י
+                  </Button>
+                </CardHeader>
+                <CardContent>
+                  <UserRegistration onRegister={updateCurrentUser} />
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
           {/* Features Grid */}
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
             {features.map((feature, index) => (
-              <Card key={index} className="text-center hover:shadow-2xl transition-all duration-300 transform hover:scale-105 bg-white/80 backdrop-blur-sm border-0 rounded-2xl">
+              <Card key={index} className="text-center hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 bg-white/90 backdrop-blur-lg border border-gray-200/50 rounded-3xl">
                 <CardHeader className="pb-4">
                   <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
                     <feature.icon className="w-8 h-8 text-white" />
@@ -113,17 +266,17 @@ export default function Index() {
             <CardContent>
               <div className="grid md:grid-cols-4 gap-8 text-center">
                 {[
-                  { step: 1, title: 'הרשמה מהירה', desc: 'צור פרופיל ובחר קהילה באזור שלך' },
-                  { step: 2, title: 'בקש או הציע', desc: 'צור בקשת איסוף או הציע שירותי איסוף' },
-                  { step: 3, title: 'תיאום', desc: 'צ\'אט עם המאסף לתיאום פרטים' },
-                  { step: 4, title: 'השלמה', desc: 'קבל את החבילה ודרג את השירות' }
+                  { icon: UserIcon, title: 'הרשמה מהירה', desc: 'צור פרופיל ובחר קהילה באזור שלך' },
+                  { icon: Edit3, title: 'בקש או הציע', desc: 'צור בקשת איסוף או הציע שירותי איסוף' },
+                  { icon: Send, title: 'תיאום', desc: "צ'אט עם המאסף לתיאום פרטים" },
+                  { icon: CheckCircle, title: 'השלמה', desc: 'קבל את החבילה ודרג את השירות' }
                 ].map((item, index) => (
                   <div key={index} className="relative">
                     <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl">
-                      <span className="text-3xl font-bold text-white">{item.step}</span>
+                      <item.icon className="w-10 h-10 text-white" />
                     </div>
-                    <h3 className="font-bold mb-3 text-lg text-gray-800">{item.title}</h3>
-                    <p className="text-sm text-gray-600 leading-relaxed">{item.desc}</p>
+                    <h3 className="font-bold mb-3 text-lg text-gray-800" dir="rtl">{item.title}</h3>
+                  <p className="text-sm text-gray-600 leading-relaxed" dir="rtl">{item.desc}</p>
                     {index < 3 && (
                       <div className="hidden md:block absolute top-10 left-full w-full h-0.5 bg-gradient-to-r from-blue-300 to-indigo-300 transform -translate-x-1/2"></div>
                     )}
@@ -132,37 +285,6 @@ export default function Index() {
               </div>
             </CardContent>
           </Card>
-
-          {/* Auth Section */}
-          <div className="max-w-md mx-auto">
-            {authMode === 'login' ? (
-              <LoginForm 
-                onLogin={setCurrentUser}
-                onSwitchToRegister={() => setAuthMode('register')}
-              />
-            ) : (
-              <Card className="backdrop-blur-xl bg-white/90 border-0 shadow-2xl rounded-3xl">
-                <CardHeader className="text-center">
-                  <CardTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                    הצטרפות לקהילת Pick4U
-                  </CardTitle>
-                  <CardDescription className="text-gray-600">
-                    הרשמה מהירה וקלה - רק הפרטים החיוניים
-                  </CardDescription>
-                  <Button
-                    variant="ghost"
-                    onClick={() => setAuthMode('login')}
-                    className="text-blue-600 hover:text-blue-700 underline"
-                  >
-                    יש לך כבר חשבון? התחבר כאן
-                  </Button>
-                </CardHeader>
-                <CardContent>
-                  <UserRegistration onRegister={setCurrentUser} />
-                </CardContent>
-              </Card>
-            )}
-          </div>
         </div>
       </div>
     );
@@ -172,302 +294,189 @@ export default function Index() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50" dir="rtl">
       {/* Navigation */}
       <nav className="bg-white/90 backdrop-blur-xl shadow-sm border-b border-gray-200/50 sticky top-0 z-50">
-        <div className="container mx-auto px-4">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center">
-                <Package className="w-6 h-6 text-white" />
+        <div className="container mx-auto px-3 sm:px-4">
+          <div className="flex justify-between items-center py-3 sm:py-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl sm:rounded-2xl flex items-center justify-center">
+                <Package className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
               </div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+              <h1 className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                 Pick4U
               </h1>
             </div>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-lg">
+            <div className="flex items-center gap-2 sm:gap-4">
+              <div className="flex items-center gap-1 sm:gap-2">
+                <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-blue-100 flex items-center justify-center text-sm sm:text-lg">
                   {currentUser.avatar || '👤'}
                 </div>
-                <span className="text-sm font-medium text-gray-700">שלום, {currentUser.name}</span>
+                <span className="text-xs sm:text-sm font-medium text-gray-700 hidden sm:block">שלום, {currentUser.name}</span>
               </div>
               {currentUser.community && (
-                <span className="text-xs bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-800 px-3 py-1 rounded-full font-medium">
+                <span className="text-xs bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-800 px-2 sm:px-3 py-1 rounded-full font-medium hidden sm:inline">
                   {currentUser.community}
                 </span>
               )}
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 size="sm"
-                onClick={() => setCurrentUser(null)}
-                className="rounded-xl border-gray-200 hover:border-gray-300 bg-white/80"
+                onClick={() => updateCurrentUser(null)}
+                className="rounded-xl border-gray-200 hover:border-gray-300 bg-white/80 text-xs sm:text-sm px-2 sm:px-3 font-bold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
               >
-                <LogOut className="w-4 h-4 ml-1" />
-                התנתק
+                <LogOut className="w-3 h-3 sm:w-4 sm:h-4 ml-1" />
+                <span className="hidden sm:inline">התנתק</span>
+                <span className="sm:hidden">יציאה</span>
               </Button>
             </div>
           </div>
         </div>
       </nav>
 
-      {/* Main Content */}
-      <div className="container mx-auto px-4 py-8">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-6 bg-white/80 backdrop-blur-sm rounded-2xl p-1 shadow-lg border-0">
-            <TabsTrigger value="profile" className="rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-indigo-600 data-[state=active]:text-white font-medium">פרופיל</TabsTrigger>
-            <TabsTrigger value="navigation" className="rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-indigo-600 data-[state=active]:text-white font-medium">ניווט</TabsTrigger>
-            <TabsTrigger value="notifications" className="rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-indigo-600 data-[state=active]:text-white font-medium">התרעות</TabsTrigger>
-            <TabsTrigger value="collect" className="rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-indigo-600 data-[state=active]:text-white font-medium">מאסף באזור</TabsTrigger>
-            <TabsTrigger value="request" className="rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-indigo-600 data-[state=active]:text-white font-medium">בקש איסוף</TabsTrigger>
-            <TabsTrigger value="home" className="rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-indigo-600 data-[state=active]:text-white font-medium">דף הבית</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="home" className="mt-8">
-            <div className="grid lg:grid-cols-3 gap-8">
-              {/* Main Actions - Right Side */}
-              <div className="lg:col-span-2 space-y-6">
-                <Card className="bg-white/80 backdrop-blur-sm border-0 rounded-3xl shadow-xl">
-                  <CardHeader className="text-center pb-8">
-                    <CardTitle className="text-3xl mb-4 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent font-bold">
-                      מה תרצה לעשות היום?
-                    </CardTitle>
-                    <CardDescription className="text-gray-600 text-lg">
-                      בחר את הפעולה הרצויה
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid gap-8">
-                      {/* Pickup Request Button */}
-                      <Card className="cursor-pointer hover:shadow-2xl transition-all duration-300 transform hover:scale-105 border-0 bg-gradient-to-br from-blue-50 to-indigo-100 rounded-3xl overflow-hidden">
-                        <CardContent className="p-8 text-center">
-                          <div className="flex items-center justify-center gap-6 mb-6">
-                            <div className="w-20 h-20 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-3xl flex items-center justify-center shadow-xl">
-                              <Package className="w-10 h-10 text-white" />
-                            </div>
-                            <div className="text-right">
-                              <h3 className="text-3xl font-bold text-blue-900 mb-3">בקשת איסוף</h3>
-                              <p className="text-blue-700 text-xl leading-relaxed">
-                                צריך שמישהו יאסוף עבורך חבילה או דואר?
-                              </p>
-                            </div>
-                          </div>
-                          <Button 
-                            size="lg" 
-                            className="w-full text-xl py-8 h-16 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-xl hover:shadow-2xl transition-all duration-300 font-medium"
-                            onClick={() => setActiveTab('request')}
-                          >
-                            <Search className="w-6 h-6 ml-2" />
-                            צור בקשת איסוף חדשה
-                          </Button>
-                        </CardContent>
-                      </Card>
-
-                      {/* Collector Button */}
-                      <Card className="cursor-pointer hover:shadow-2xl transition-all duration-300 transform hover:scale-105 border-0 bg-gradient-to-br from-green-50 to-emerald-100 rounded-3xl overflow-hidden">
-                        <CardContent className="p-8 text-center">
-                          <div className="flex items-center justify-center gap-6 mb-6">
-                            <div className="w-20 h-20 bg-gradient-to-br from-green-600 to-emerald-600 rounded-3xl flex items-center justify-center shadow-xl">
-                              <Truck className="w-10 h-10 text-white" />
-                            </div>
-                            <div className="text-right">
-                              <h3 className="text-3xl font-bold text-green-900 mb-3">מאסף באזור</h3>
-                              <p className="text-green-700 text-xl leading-relaxed">
-                                רוצה להרוויח כסף ולעזור לקהילה?
-                              </p>
-                            </div>
-                          </div>
-                          <Button 
-                            size="lg" 
-                            className="w-full text-xl py-8 h-16 rounded-2xl bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-xl hover:shadow-2xl transition-all duration-300 font-medium"
-                            onClick={() => setActiveTab('collect')}
-                          >
-                            <Users className="w-6 h-6 ml-2" />
-                            התחל לאסוף באזור שלך
-                          </Button>
-                        </CardContent>
-                      </Card>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Quick Stats */}
-                <div className="grid md:grid-cols-2 gap-6">
-                  <Card className="hover:shadow-2xl transition-all duration-300 transform hover:scale-105 bg-white/80 backdrop-blur-sm border-0 rounded-3xl">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center">
-                          <Package className="w-5 h-5 text-white" />
-                        </div>
-                        הבקשות שלי
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-3">0</div>
-                      <p className="text-gray-600 mb-6 text-lg">בקשות פעילות</p>
-                      <Button className="w-full h-12 rounded-2xl bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 shadow-lg hover:shadow-xl transition-all duration-300" onClick={() => setActiveTab('request')}>
-                        צור בקשה חדשה
-                      </Button>
-                    </CardContent>
-                  </Card>
-                  
-                  <Card className="hover:shadow-2xl transition-all duration-300 transform hover:scale-105 bg-white/80 backdrop-blur-sm border-0 rounded-3xl">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center">
-                          <Truck className="w-5 h-5 text-white" />
-                        </div>
-                        איסופים שביצעתי
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-4xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent mb-3">{currentUser.completedDeliveries}</div>
-                      <p className="text-gray-600 mb-6 text-lg">משלוחים הושלמו</p>
-                      <Button className="w-full h-12 rounded-2xl bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 shadow-lg hover:shadow-xl transition-all duration-300" onClick={() => setActiveTab('collect')}>
-                        התחל לאסוף
-                      </Button>
-                    </CardContent>
-                  </Card>
-                </div>
-              </div>
-
-              {/* Profile Summary - Left Side */}
-              <div className="space-y-6">
-                <Card className="hover:shadow-2xl transition-all duration-300 bg-white/80 backdrop-blur-sm border-0 rounded-3xl">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-100 to-indigo-200 flex items-center justify-center text-2xl">
-                        {currentUser.avatar || '👤'}
-                      </div>
-                      הפרופיל שלי
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-600">דירוג</span>
-                      <div className="flex items-center gap-1">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <Star 
-                            key={star} 
-                            className={`w-5 h-5 ${star <= currentUser.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} 
-                          />
-                        ))}
-                        <span className="text-sm text-gray-600 mr-2 font-medium">({currentUser.rating.toFixed(1)})</span>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-600">מיקום</span>
-                      <span className="text-sm font-bold text-gray-800">{currentUser.city}</span>
-                    </div>
-
-                    {currentUser.community && (
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-gray-600">קהילה</span>
-                        <span className="text-sm font-bold text-gray-800">{currentUser.community}</span>
-                      </div>
-                    )}
-                    
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-600">משלוחים</span>
-                      <span className="text-sm font-bold text-gray-800">{currentUser.completedDeliveries}</span>
-                    </div>
-                    
-                    <Button 
-                      variant="outline" 
-                      className="w-full h-12 rounded-2xl border-2 border-blue-200 hover:border-blue-300 bg-white/80 hover:bg-white shadow-lg hover:shadow-xl transition-all duration-300 font-medium" 
-                      onClick={() => setActiveTab('profile')}
-                    >
-                      עדכן פרופיל
-                    </Button>
-                  </CardContent>
-                </Card>
-
-                {/* Recent Activity */}
-                <Card className="bg-white/80 backdrop-blur-sm border-0 rounded-3xl shadow-xl">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl flex items-center justify-center">
-                        <Bell className="w-5 h-5 text-white" />
-                      </div>
-                      פעילות אחרונה
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-gray-500 text-sm text-center py-6">
-                      אין פעילות אחרונה
-                    </p>
-                    <Button 
-                      variant="outline" 
-                      className="w-full h-12 rounded-2xl border-2 border-orange-200 hover:border-orange-300 bg-white/80 hover:bg-white shadow-lg hover:shadow-xl transition-all duration-300 font-medium" 
-                      onClick={() => setActiveTab('notifications')}
-                    >
-                      צפה בהתרעות
-                    </Button>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="request" className="mt-8">
-            <PickupRequest user={currentUser} />
-          </TabsContent>
-
-          <TabsContent value="collect" className="mt-8">
-            <CollectorDashboard user={currentUser} />
-          </TabsContent>
-
-          <TabsContent value="notifications" className="mt-8">
-            <NotificationsTab user={currentUser} />
-          </TabsContent>
-
-          <TabsContent value="navigation" className="mt-8">
-            <Card className="bg-white/80 backdrop-blur-sm border-0 rounded-3xl shadow-xl">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center">
-                    <Navigation className="w-5 h-5 text-white" />
-                  </div>
-                  ניווט ומיקום
-                </CardTitle>
-                <CardDescription>
-                  כלי ניווט ומעקב מיקום למשלוחים
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  <div className="p-6 border-0 bg-gradient-to-br from-blue-50 to-indigo-100 rounded-2xl">
-                    <h4 className="font-bold mb-3 text-lg">המיקום הנוכחי שלי</h4>
-                    <p className="text-sm text-gray-600 mb-4 leading-relaxed">
-                      {currentUser.city}
-                      {currentUser.community && ` - ${currentUser.community}`}
-                    </p>
-                    <Button variant="outline" size="sm" className="rounded-xl">
-                      <MapPin className="w-4 h-4 ml-1" />
-                      עדכן מיקום
-                    </Button>
-                  </div>
-                  
-                  <div className="p-6 border-0 bg-gradient-to-br from-green-50 to-emerald-100 rounded-2xl">
-                    <h4 className="font-bold mb-3 text-lg">משלוחים פעילים</h4>
-                    <p className="text-sm text-gray-600">אין משלוחים פעילים כרגע</p>
-                  </div>
-                  
-                  <div className="p-6 border-0 bg-gradient-to-br from-purple-50 to-pink-100 rounded-2xl">
-                    <h4 className="font-bold mb-3 text-lg">היסטוריית ניווט</h4>
-                    <p className="text-sm text-gray-600">עדיין לא ביצעת משלוחים</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="profile" className="mt-8">
-            <UserProfile user={currentUser} onUpdate={setCurrentUser} />
-          </TabsContent>
-        </Tabs>
+      {/* Top Advertisement Banner */}
+      <div className="container mx-auto px-3 sm:px-4 mt-3">
+        <AdBanner />
       </div>
 
-      {/* Chat Interface (if active) */}
-      <ChatInterface />
+      {/* Tabs Navigation */}
+      <div className="bg-white/90 backdrop-blur-md border-b border-gray-200 relative z-10 mt-4">
+        <div className="container mx-auto px-3 sm:px-4">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="h-auto grid grid-cols-3 sm:grid-cols-6 w-full gap-2 sm:gap-3 bg-gradient-to-br from-white to-gray-100 backdrop-blur-xl border-4 border-gray-400 rounded-3xl p-5 shadow-4xl">
+              <TabsTrigger
+                value="home"
+                className="relative group overflow-hidden rounded-2xl bg-gradient-to-br from-sky-300 to-blue-400 text-gray-900 font-extrabold text-lg py-6 px-5 text-center transition-all duration-300 hover:from-sky-400 hover:to-blue-500 hover:shadow-3xl border-4 border-sky-400/80 data-[state=active]:from-sky-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:shadow-3xl data-[state=active]:border-sky-600 data-[state=active]:scale-110"
+              >
+                <div className="relative z-10 flex flex-col items-center gap-2">
+                  <span className="text-xl">🏠</span>
+                  <span className="text-xs font-bold">בית</span>
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-br from-sky-400 to-blue-500 opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
+              </TabsTrigger>
+
+              <TabsTrigger
+                value="request"
+                className="relative group overflow-hidden rounded-2xl bg-gradient-to-br from-purple-300 to-indigo-400 text-gray-900 font-extrabold text-lg py-6 px-5 text-center transition-all duration-300 hover:from-purple-400 hover:to-indigo-500 hover:shadow-3xl border-4 border-purple-400/80 data-[state=active]:from-purple-500 data-[state=active]:to-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-3xl data-[state=active]:border-purple-600 data-[state=active]:scale-110"
+              >
+                <div className="relative z-10 flex flex-col items-center gap-2">
+                  <span className="text-xl">📦</span>
+                  <span className="text-xs font-bold">בקשה</span>
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-400 to-indigo-500 opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
+              </TabsTrigger>
+
+              <TabsTrigger
+                value="collector"
+                className="relative group overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-300 to-teal-400 text-gray-900 font-extrabold text-lg py-6 px-5 text-center transition-all duration-300 hover:from-emerald-400 hover:to-teal-500 hover:shadow-3xl border-4 border-emerald-400/80 data-[state=active]:from-emerald-500 data-[state=active]:to-teal-600 data-[state=active]:text-white data-[state=active]:shadow-3xl data-[state=active]:border-emerald-600 data-[state=active]:scale-110"
+              >
+                <div className="relative z-10 flex flex-col items-center gap-2">
+                  <span className="text-xl">🚗</span>
+                  <span className="text-xs font-bold">מאסף</span>
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-br from-emerald-400 to-teal-500 opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
+              </TabsTrigger>
+
+              <TabsTrigger
+                value="notifications"
+                className="relative group overflow-hidden rounded-2xl bg-gradient-to-br from-rose-300 to-red-400 text-gray-900 font-extrabold text-lg py-6 px-5 text-center transition-all duration-300 hover:from-rose-400 hover:to-red-500 hover:shadow-3xl border-4 border-rose-400/80 data-[state=active]:from-rose-500 data-[state=active]:to-red-600 data-[state=active]:text-white data-[state=active]:shadow-3xl data-[state=active]:border-rose-600 data-[state=active]:scale-110"
+              >
+                <div className="relative z-10 flex flex-col items-center gap-2">
+                  <span className="text-xl">🔔</span>
+                  <span className="text-xs font-bold">התראות</span>
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-br from-rose-400 to-red-500 opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
+              </TabsTrigger>
+
+              <TabsTrigger
+                value="profile"
+                className="relative group overflow-hidden rounded-2xl bg-gradient-to-br from-pink-300 to-rose-400 text-gray-900 font-extrabold text-lg py-6 px-5 text-center transition-all duration-300 hover:from-pink-400 hover:to-rose-500 hover:shadow-3xl border-4 border-pink-400/80 data-[state=active]:from-pink-500 data-[state=active]:to-rose-600 data-[state=active]:text-white data-[state=active]:shadow-3xl data-[state=active]:border-pink-600 data-[state=active]:scale-110"
+              >
+                <div className="relative z-10 flex flex-col items-center gap-2">
+                  <span className="text-xl">👤</span>
+                  <span className="text-xs font-bold">פרופיל</span>
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-br from-pink-400 to-rose-500 opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
+              </TabsTrigger>
+              <TabsTrigger
+                value="chats"
+                className="relative group overflow-hidden rounded-2xl bg-gradient-to-br from-cyan-300 to-blue-400 text-gray-900 font-extrabold text-lg py-6 px-5 text-center transition-all duration-300 hover:from-cyan-400 hover:to-blue-500 hover:shadow-3xl border-4 border-cyan-400/80 data-[state=active]:from-cyan-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:shadow-3xl data-[state=active]:border-cyan-600 data-[state=active]:scale-110"
+              >
+                <div className="relative z-10 flex flex-col items-center gap-2">
+                  <span className="text-xl">💬</span>
+                  <span className="text-xs font-bold">צ'אטים</span>
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-br from-cyan-400 to-blue-500 opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
+              </TabsTrigger>
+            </TabsList>
+
+            {/* Tab Content */}
+            <TabsContent value="home" className="mt-4 sm:mt-8">
+              <div className="flex flex-col items-center justify-center py-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-xl">
+                  <Button
+                    onClick={() => setActiveTab('request')}
+                    className="h-32 text-3xl font-extrabold rounded-3xl shadow-2xl hover:shadow-3xl transition-all bg-gradient-to-br from-emerald-500 to-teal-600 text-white px-8"
+                  >
+                    בקשת איסוף
+                  </Button>
+                  <Button
+                    onClick={() => setActiveTab('collector')}
+                    className="h-32 text-3xl font-extrabold rounded-3xl shadow-2xl hover:shadow-3xl transition-all bg-gradient-to-br from-purple-600 to-pink-600 text-white px-8"
+                  >
+                    מאסף
+                  </Button>
+                </div>
+              </div>
+            </TabsContent>
+            {/* Tab Content */}
+            <TabsContent value="request" className="mt-4 sm:mt-8">
+              <PickupRequest
+                user={currentUser}
+                onRequestSubmit={handleRequestSubmit}
+              />
+            </TabsContent>
+            <TabsContent value="collector" className="mt-4 sm:mt-8">
+              <CollectorDashboard
+                user={currentUser}
+                onOpenChat={handleOpenChat}
+              />
+            </TabsContent>
+            <TabsContent value="profile" className="mt-4 sm:mt-8">
+              <UserProfile
+                user={currentUser}
+                onUpdate={updateCurrentUser}
+              />
+            </TabsContent>
+            <TabsContent value="notifications" className="mt-4 sm:mt-8">
+              {currentUser && (
+                <NotificationsTab
+                  user={currentUser}
+                  pickupRequests={pickupRequests}
+                  onNotificationAction={handleNotificationAction}
+                />
+              )}
+            </TabsContent>
+            <TabsContent value="chats" className="mt-4 sm:mt-8">
+              <Chats />
+            </TabsContent>
+</Tabs>
+        </div>
+      </div>
+
+      {/* Chat Overlay */}
+      {showChat && activeChat && (
+        <ChatInterface
+          user={currentUser}
+          activeChat={activeChat}
+          pickupRequest={chatPickupRequest}
+          onClose={() => setShowChat(false)}
+          viewMode="page"
+        />
+      )}
+
+      {/* Bottom AdBanner */}
+      <BottomAdBanner />
+      
+      {/* Spacer to prevent banner from covering content */}
+      <div className="h-20"></div>
     </div>
   );
 }

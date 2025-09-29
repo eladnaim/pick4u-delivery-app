@@ -11,7 +11,8 @@ import {
   orderBy, 
   onSnapshot,
   serverTimestamp,
-  GeoPoint
+  GeoPoint,
+  DocumentData
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../config/firebase';
@@ -168,9 +169,9 @@ class PickupService {
   }
 
   // Update request status
-  async updateRequestStatus(requestId: string, status: PickupRequest['status'], additionalData?: any) {
+  async updateRequestStatus(requestId: string, status: PickupRequest['status'], additionalData?: DocumentData) {
     try {
-      const updateData: any = {
+      const updateData: DocumentData = {
         status,
         updatedAt: serverTimestamp(),
         ...additionalData

@@ -1,0 +1,91 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Modern gradient background -->
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#764ba2;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f093fb;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Package gradient -->
+    <linearGradient id="packageGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ff9a9e;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#fecfef;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Motion trail gradient -->
+    <linearGradient id="trailGradient" x1="0%" y1="50%" x2="100%" y2="50%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0" />
+      <stop offset="50%" style="stop-color:#ffffff;stop-opacity:0.8" />
+      <stop offset="100%" style="stop-color:#ffffff;stop-opacity:0" />
+    </linearGradient>
+    
+    <!-- Shadow filter -->
+    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="4" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  
+  <!-- Background circle -->
+  <circle cx="512" cy="512" r="512" fill="url(#bgGradient)"/>
+  
+  <!-- Motion trails (speed lines) -->
+  <g opacity="0.6">
+    <ellipse cx="200" cy="400" rx="80" ry="8" fill="url(#trailGradient)" transform="rotate(-15 200 400)"/>
+    <ellipse cx="180" cy="450" rx="60" ry="6" fill="url(#trailGradient)" transform="rotate(-15 180 450)"/>
+    <ellipse cx="220" cy="500" rx="70" ry="7" fill="url(#trailGradient)" transform="rotate(-15 220 500)"/>
+    
+    <ellipse cx="150" cy="550" rx="90" ry="9" fill="url(#trailGradient)" transform="rotate(-15 150 550)"/>
+    <ellipse cx="170" cy="600" rx="65" ry="6" fill="url(#trailGradient)" transform="rotate(-15 170 600)"/>
+  </g>
+  
+  <!-- Main delivery package -->
+  <g transform="translate(400, 300)" filter="url(#shadow)">
+    <!-- Package box -->
+    <rect x="0" y="0" width="200" height="160" rx="12" ry="12" fill="url(#packageGradient)" stroke="#ffffff" stroke-width="3"/>
+    
+    <!-- Package tape (horizontal) -->
+    <rect x="-10" y="70" width="220" height="20" fill="#ffffff" opacity="0.9"/>
+    
+    <!-- Package tape (vertical) -->
+    <rect x="90" y="-10" width="20" height="180" fill="#ffffff" opacity="0.9"/>
+    
+    <!-- Package handle/grip -->
+    <ellipse cx="100" cy="40" rx="25" ry="8" fill="#ffffff" opacity="0.7"/>
+    
+    <!-- Delivery arrow -->
+    <g transform="translate(220, 80)">
+      <path d="M0,0 L40,0 L35,-10 M40,0 L35,10" stroke="#ffffff" stroke-width="6" fill="none" stroke-linecap="round"/>
+    </g>
+  </g>
+  
+  <!-- Flying/floating effect particles -->
+  <g opacity="0.8">
+    <circle cx="650" cy="250" r="4" fill="#ffffff"/>
+    <circle cx="680" cy="280" r="3" fill="#ffffff" opacity="0.7"/>
+    <circle cx="620" cy="300" r="2" fill="#ffffff" opacity="0.5"/>
+    
+    <circle cx="750" cy="400" r="3" fill="#ffffff" opacity="0.6"/>
+    <circle cx="780" cy="430" r="2" fill="#ffffff" opacity="0.4"/>
+    
+    <circle cx="300" cy="200" r="2" fill="#ffffff" opacity="0.5"/>
+    <circle cx="320" cy="180" r="3" fill="#ffffff" opacity="0.7"/>
+  </g>
+  
+  <!-- App name "Pick4U" -->
+  <g transform="translate(512, 650)" text-anchor="middle">
+    <text x="0" y="0" font-family="Arial, sans-serif" font-size="80" font-weight="bold" fill="#ffffff" opacity="0.95">
+      Pick4U
+    </text>
+    <!-- Subtitle -->
+    <text x="0" y="50" font-family="Arial, sans-serif" font-size="32" font-weight="normal" fill="#ffffff" opacity="0.8">
+      משלוחים מהירים
+    </text>
+  </g>
+  
+  <!-- Additional motion elements -->
+  <g opacity="0.4">
+    <!-- Curved motion path -->
+    <path d="M 100 400 Q 300 200 500 300 T 900 400" stroke="#ffffff" stroke-width="2" fill="none" stroke-dasharray="10,5"/>
+  </g>
+</svg>

@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   
   <!-- App Identity -->
   <title>Pick4U - איסוף חבילות קהילתי</title>
@@ -87,7 +87,8 @@
       top: 0;
       left: 0;
       width: 100%;
-      height: 100%;
+      height: 100vh;
+      height: 100dvh; /* Dynamic viewport height for mobile */
       background: linear-gradient(135deg, #3B82F6 0%, #6366F1 100%);
       display: flex;
       flex-direction: column;
@@ -96,6 +97,8 @@
       z-index: 9999;
       color: white;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      -webkit-user-select: none;
+      user-select: none;
     }
     
     .loading-logo {
@@ -145,7 +148,25 @@
     .app-loaded #loading-screen {
       opacity: 0;
       pointer-events: none;
-      transition: opacity 0.3s ease-out;
+      transition: opacity 0.5s ease-out;
+    }
+    
+    /* Ensure body doesn't scroll during loading */
+    body:not(.app-loaded) {
+      overflow: hidden;
+      position: fixed;
+      width: 100%;
+      height: 100%;
+    }
+    
+    /* Force hide after 2 seconds regardless */
+    @keyframes forceHide {
+      0% { opacity: 1; }
+      100% { opacity: 0; pointer-events: none; }
+    }
+    
+    #loading-screen {
+      animation: forceHide 0.5s ease-out 2s forwards;
     }
   </style>
 </head>
@@ -165,9 +186,20 @@
   <div id="root"></div>
   
   <!-- Service Worker Registration -->
-  <script>
-    // Register service worker
-    if ('serviceWorker' in navigator) {
+  <script type="module">
+    // In development, ensure no service worker controls the app (prevents Vite HMR/WebSocket issues)
+    if (import.meta.env.DEV && 'serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then((regs) => {
+        if (regs.length) {
+          regs.forEach((r) => r.unregister());
+          console.log('[DEV] Unregistered existing service workers');
+        }
+      });
+    }
+
+    // Register service worker only in production (skip in iOS in-app WebView)
+    const isInAppIOS = navigator.userAgent && navigator.userAgent.includes('pick4u-ios');
+    if ('serviceWorker' in navigator && import.meta.env.PROD && !isInAppIOS) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js')
           .then(registration => {
@@ -176,13 +208,14 @@
             // Check for updates
             registration.addEventListener('updatefound', () => {
               const newWorker = registration.installing;
+              if (!newWorker) return;
               newWorker.addEventListener('statechange', () => {
                 if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                  // New content available, show update notification
-                  if (confirm('גרסה חדשה זמינה! האם לעדכן עכשיו?')) {
+                  // New content available - auto update & reload to avoid stale cache
+                  try {
                     newWorker.postMessage({ type: 'SKIP_WAITING' });
-                    window.location.reload();
-                  }
+                  } catch (e) {}
+                  // if skipWaiting applies, controllerchange will fire and reload below
                 }
               });
             });
@@ -192,18 +225,39 @@
           });
       });
       
-      // Handle service worker updates
+      // Handle service worker updates - removed auto-reload to prevent constant refreshing
       navigator.serviceWorker.addEventListener('controllerchange', () => {
-        window.location.reload();
+        console.log('Service worker updated - manual refresh may be needed');
+        // Optionally show a notification to user instead of auto-reload
       });
     }
     
-    // Hide loading screen when app loads
+    // Hide loading screen when app loads - reduced timeout
     window.addEventListener('load', () => {
       setTimeout(() => {
         document.body.classList.add('app-loaded');
-      }, 1000);
+      }, 100);
     });
+    
+    // Also hide loading screen when React app mounts - reduced timeout
+    window.addEventListener('DOMContentLoaded', () => {
+      // Check if React app has mounted by looking for React root
+      const checkAppMounted = () => {
+        const root = document.getElementById('root');
+        if (root && root.children.length > 0) {
+          document.body.classList.add('app-loaded');
+        } else {
+          setTimeout(checkAppMounted, 50);
+        }
+      };
+      setTimeout(checkAppMounted, 100);
+    });
+    
+    // Fallback: Force hide loading screen after 1.5 seconds
+    setTimeout(() => {
+      document.body.classList.add('app-loaded');
+      console.log('Loading screen hidden by fallback timer');
+    }, 1500);
     
     // Install prompt for PWA
     let deferredPrompt;
@@ -214,7 +268,11 @@
       // Show install button after 3 seconds
       setTimeout(() => {
         if (deferredPrompt && !window.matchMedia('(display-mode: standalone)').matches) {
+          // Check if banner already exists
+          if (document.getElementById('install-banner')) return;
+          
           const installBanner = document.createElement('div');
+          installBanner.id = 'install-banner';
           installBanner.innerHTML = `
             <div style="position: fixed; bottom: 20px; left: 20px; right: 20px; background: #3B82F6; color: white; padding: 16px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 1000; display: flex; align-items: center; justify-content: space-between; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
               <div>
@@ -222,7 +280,7 @@
                 <div style="font-size: 14px; opacity: 0.9;">קבל גישה מהירה לאפליקציה</div>
               </div>
               <div>
-                <button onclick="this.parentElement.parentElement.parentElement.remove()" style="background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 12px; border-radius: 8px; margin-left: 8px; cursor: pointer;">לא תודה</button>
+                <button onclick="this.closest('#install-banner').remove()" style="background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 12px; border-radius: 8px; margin-left: 8px; cursor: pointer;">לא תודה</button>
                 <button onclick="installApp()" style="background: white; border: none; color: #3B82F6; padding: 8px 16px; border-radius: 8px; font-weight: bold; cursor: pointer;">התקן</button>
               </div>
             </div>
@@ -249,13 +307,13 @@
     window.addEventListener('appinstalled', (evt) => {
       console.log('App was installed');
       // Hide install banner if visible
-      const banner = document.querySelector('[style*="position: fixed"]');
+      const banner = document.getElementById('install-banner');
       if (banner) banner.remove();
     });
   </script>
   
   <!-- App Script -->
   <script type="module" src="/src/main.tsx"></script>
-</body>
-
-</html>
+ </body>
+ 
+ </html>

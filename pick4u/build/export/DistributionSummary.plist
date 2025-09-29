@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>pick4u.ipa</key>
+	<array>
+		<dict>
+			<key>architectures</key>
+			<array>
+				<string>arm64</string>
+			</array>
+			<key>buildNumber</key>
+			<string>2</string>
+			<key>certificate</key>
+			<dict>
+				<key>SHA1</key>
+				<string>D44F60AE0EC9D7C9475964AB07DBD0C41DC11121</string>
+				<key>dateExpires</key>
+				<string>21/09/2026</string>
+				<key>type</key>
+				<string>Cloud Managed Apple Distribution</string>
+			</dict>
+			<key>entitlements</key>
+			<dict>
+				<key>application-identifier</key>
+				<string>M8767H8B7G.com.eladnaim.pick4u.pick4u</string>
+				<key>beta-reports-active</key>
+				<true/>
+				<key>com.apple.developer.team-identifier</key>
+				<string>M8767H8B7G</string>
+				<key>get-task-allow</key>
+				<false/>
+			</dict>
+			<key>name</key>
+			<string>pick4u.app</string>
+			<key>profile</key>
+			<dict>
+				<key>UUID</key>
+				<string>f4a4bcf1-bf83-4b01-9840-8a55d9d1fde4</string>
+				<key>dateExpires</key>
+				<string>21/09/2026</string>
+				<key>name</key>
+				<string>iOS Team Store Provisioning Profile: com.eladnaim.pick4u.pick4u</string>
+			</dict>
+			<key>symbols</key>
+			<true/>
+			<key>team</key>
+			<dict>
+				<key>id</key>
+				<string>M8767H8B7G</string>
+				<key>name</key>
+				<string></string>
+			</dict>
+			<key>versionNumber</key>
+			<string>1.1</string>
+		</dict>
+	</array>
+</dict>
+</plist>

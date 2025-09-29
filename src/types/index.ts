@@ -6,6 +6,7 @@ export interface User {
   address: string;
   city: string;
   community?: string;
+  communities?: string[]; // רשימת הקהילות שהמשתמש מנוי עליהן
   neighborhood?: string;
   floor?: string;
   additionalInfo?: string;
@@ -19,6 +20,9 @@ export interface User {
   joinDate: string;
   agreeToTerms: boolean;
   agreeToLiability: boolean;
+  role?: 'user' | 'tester' | 'admin'; // תפקיד המשתמש - ברירת מחדל user
+  isTester?: boolean; // האם המשתמש הוא טסטר
+  isCollector?: boolean; // האם המשתמש הוא מאסף
 }
 
 export interface PickupRequest {
@@ -29,6 +33,7 @@ export interface PickupRequest {
   pickupCity: string;
   deliveryLocation: string;
   deliveryCity: string;
+  destinationAddress?: string; // כתובת היעד - ברירת מחדל כתובת המבקש
   packageSize: 'small' | 'medium' | 'large';
   urgency: 'low' | 'normal' | 'high';
   suggestedPrice: number;

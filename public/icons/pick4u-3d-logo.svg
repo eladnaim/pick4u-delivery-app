@@ -1,0 +1,167 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- App color scheme gradients -->
+    <linearGradient id="appBgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#dbeafe;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#e0e7ff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f3e8ff;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Primary color gradient (dark blue) -->
+    <linearGradient id="primaryGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e293b;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#334155;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- 3D Package gradients -->
+    <linearGradient id="packageTop" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f8fafc;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#e2e8f0;stop-opacity:1" />
+    </linearGradient>
+    
+    <linearGradient id="packageSide" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#cbd5e1;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#94a3b8;stop-opacity:1" />
+    </linearGradient>
+    
+    <linearGradient id="packageFront" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#e2e8f0;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#cbd5e1;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Stamp gradient -->
+    <linearGradient id="stampGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#dc2626;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#b91c1c;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Shadow filters -->
+    <filter id="dropShadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="8" dy="12" stdDeviation="16" flood-color="#000000" flood-opacity="0.25"/>
+    </filter>
+    
+    <filter id="textShadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="2" dy="4" stdDeviation="8" flood-color="#000000" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1024" height="1024" fill="url(#appBgGradient)"/>
+  
+  <!-- 3D Package Container -->
+  <g transform="translate(512, 400)" filter="url(#dropShadow)">
+    
+    <!-- Package Back Side (3D effect) -->
+    <path d="M-80,-60 L-60,-80 L60,-80 L80,-60 L80,60 L60,80 L-60,80 L-80,60 Z" 
+          fill="url(#packageSide)" opacity="0.7"/>
+    
+    <!-- Package Right Side (3D effect) -->
+    <path d="M80,-60 L100,-80 L100,40 L80,60 Z" 
+          fill="url(#packageSide)" opacity="0.5"/>
+    
+    <!-- Package Top (3D effect) -->
+    <path d="M-80,-60 L-60,-80 L60,-80 L80,-60 L60,-40 L-60,-40 Z" 
+          fill="url(#packageTop)"/>
+    
+    <!-- Package Front Face -->
+    <rect x="-80" y="-60" width="160" height="120" rx="8" ry="8" 
+          fill="url(#packageFront)" stroke="#64748b" stroke-width="2"/>
+    
+    <!-- Package Tape (Horizontal) -->
+    <rect x="-90" y="-10" width="180" height="20" fill="#fbbf24" opacity="0.9"/>
+    <rect x="-90" y="-8" width="180" height="4" fill="#f59e0b"/>
+    <rect x="-90" y="6" width="180" height="4" fill="#d97706"/>
+    
+    <!-- Package Tape (Vertical) -->
+    <rect x="-10" y="-70" width="20" height="140" fill="#fbbf24" opacity="0.9"/>
+    <rect x="-8" y="-70" width="4" height="140" fill="#f59e0b"/>
+    <rect x="6" y="-70" width="4" height="140" fill="#d97706"/>
+    
+    <!-- Address Label -->
+    <rect x="-60" y="-40" width="80" height="30" rx="4" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/>
+    <rect x="-58" y="-38" width="76" height="2" fill="#e2e8f0"/>
+    <rect x="-58" y="-34" width="60" height="2" fill="#e2e8f0"/>
+    <rect x="-58" y="-30" width="50" height="2" fill="#e2e8f0"/>
+    <rect x="-58" y="-26" width="40" height="2" fill="#e2e8f0"/>
+    
+    <!-- 3D Stamp -->
+    <g transform="translate(35, -25)">
+      <!-- Stamp shadow/depth -->
+      <rect x="2" y="2" width="28" height="20" rx="2" fill="#7f1d1d" opacity="0.6"/>
+      <!-- Main stamp -->
+      <rect x="0" y="0" width="28" height="20" rx="2" fill="url(#stampGradient)" stroke="#991b1b" stroke-width="1"/>
+      <!-- Stamp perforations -->
+      <rect x="-1" y="3" width="2" height="2" fill="#ffffff" opacity="0.3"/>
+      <rect x="-1" y="7" width="2" height="2" fill="#ffffff" opacity="0.3"/>
+      <rect x="-1" y="11" width="2" height="2" fill="#ffffff" opacity="0.3"/>
+      <rect x="-1" y="15" width="2" height="2" fill="#ffffff" opacity="0.3"/>
+      
+      <rect x="27" y="3" width="2" height="2" fill="#ffffff" opacity="0.3"/>
+      <rect x="27" y="7" width="2" height="2" fill="#ffffff" opacity="0.3"/>
+      <rect x="27" y="11" width="2" height="2" fill="#ffffff" opacity="0.3"/>
+      <rect x="27" y="15" width="2" height="2" fill="#ffffff" opacity="0.3"/>
+      
+      <!-- Stamp text -->
+      <text x="14" y="8" text-anchor="middle" fill="#ffffff" font-family="Arial, sans-serif" font-size="6" font-weight="bold">✓</text>
+      <text x="14" y="16" text-anchor="middle" fill="#ffffff" font-family="Arial, sans-serif" font-size="4" font-weight="bold">PAID</text>
+    </g>
+    
+    <!-- Package Handle -->
+    <ellipse cx="0" cy="-45" rx="15" ry="5" fill="#64748b" opacity="0.8"/>
+    <ellipse cx="0" cy="-47" rx="15" ry="3" fill="#94a3b8"/>
+  </g>
+  
+  <!-- Pick4U Logo Text -->
+  <g transform="translate(512, 600)" filter="url(#textShadow)">
+    <!-- Main title -->
+    <text x="0" y="0" text-anchor="middle" fill="url(#primaryGradient)" 
+          font-family="Arial, sans-serif" font-size="120" font-weight="900" letter-spacing="-2px">
+      Pick4U
+    </text>
+    
+    <!-- Subtitle -->
+    <text x="0" y="60" text-anchor="middle" fill="#64748b" 
+          font-family="Arial, sans-serif" font-size="36" font-weight="600">
+      איסוף חבילות קהילתי
+    </text>
+    
+    <!-- Decorative underline -->
+    <rect x="-100" y="20" width="200" height="4" rx="2" fill="url(#primaryGradient)" opacity="0.6"/>
+  </g>
+  
+  <!-- Floating elements for depth -->
+  <g opacity="0.4">
+    <!-- Small packages floating around -->
+    <g transform="translate(200, 200) rotate(15)">
+      <rect x="0" y="0" width="40" height="30" rx="4" fill="#e2e8f0" stroke="#cbd5e1"/>
+      <rect x="-5" y="12" width="50" height="6" fill="#fbbf24" opacity="0.7"/>
+    </g>
+    
+    <g transform="translate(800, 250) rotate(-20)">
+      <rect x="0" y="0" width="35" height="25" rx="3" fill="#e2e8f0" stroke="#cbd5e1"/>
+      <rect x="15" y="-5" width="5" height="35" fill="#fbbf24" opacity="0.7"/>
+    </g>
+    
+    <g transform="translate(150, 700) rotate(25)">
+      <rect x="0" y="0" width="30" height="20" rx="3" fill="#e2e8f0" stroke="#cbd5e1"/>
+      <circle cx="15" cy="10" r="8" fill="#dc2626" opacity="0.6"/>
+    </g>
+    
+    <g transform="translate(850, 650) rotate(-10)">
+      <rect x="0" y="0" width="45" height="35" rx="4" fill="#e2e8f0" stroke="#cbd5e1"/>
+      <rect x="20" y="-5" width="5" height="45" fill="#fbbf24" opacity="0.7"/>
+      <rect x="-5" y="15" width="55" height="5" fill="#fbbf24" opacity="0.7"/>
+    </g>
+  </g>
+  
+  <!-- Delivery truck icon (subtle) -->
+  <g transform="translate(512, 800)" opacity="0.3">
+    <path d="M-30,-10 L-30,10 L-20,10 L-20,15 L-15,15 L-15,10 L15,10 L15,15 L20,15 L20,10 L30,10 L30,-5 L20,-5 L20,-10 Z" 
+          fill="url(#primaryGradient)"/>
+    <circle cx="-15" cy="15" r="8" fill="#64748b"/>
+    <circle cx="15" cy="15" r="8" fill="#64748b"/>
+    <circle cx="-15" cy="15" r="5" fill="#94a3b8"/>
+    <circle cx="15" cy="15" r="5" fill="#94a3b8"/>
+    <rect x="20" y="-10" width="10" height="15" fill="url(#primaryGradient)"/>
+  </g>
+</svg>

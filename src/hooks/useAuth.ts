@@ -38,8 +38,9 @@ export const useAuth = () => {
       setError(null);
       setLoading(true);
       await authService.loginWithEmail(email, password);
-    } catch (err: any) {
-      setError(getAuthErrorMessage(err.code));
+    } catch (err: unknown) {
+      const errorCode = (err as { code?: string })?.code || 'unknown';
+      setError(getAuthErrorMessage(errorCode));
       throw err;
     } finally {
       setLoading(false);
@@ -51,8 +52,9 @@ export const useAuth = () => {
       setError(null);
       setLoading(true);
       await authService.registerWithEmail(email, password, profile);
-    } catch (err: any) {
-      setError(getAuthErrorMessage(err.code));
+    } catch (err: unknown) {
+      const errorCode = (err as { code?: string })?.code || 'unknown';
+      setError(getAuthErrorMessage(errorCode));
       throw err;
     } finally {
       setLoading(false);
@@ -64,8 +66,9 @@ export const useAuth = () => {
       setError(null);
       setLoading(true);
       await authService.loginWithGoogle();
-    } catch (err: any) {
-      setError(getAuthErrorMessage(err.code));
+    } catch (err: unknown) {
+      const errorCode = (err as { code?: string })?.code || 'unknown';
+      setError(getAuthErrorMessage(errorCode));
       throw err;
     } finally {
       setLoading(false);
@@ -76,7 +79,7 @@ export const useAuth = () => {
     try {
       setError(null);
       await authService.logout();
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError('שגיאה בהתנתקות');
       throw err;
     }
@@ -90,7 +93,7 @@ export const useAuth = () => {
       await authService.saveUserProfile(user.uid, updates);
       const updatedProfile = await authService.getUserProfile(user.uid);
       setUserProfile(updatedProfile);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError('שגיאה בעדכון הפרופיל');
       throw err;
     }

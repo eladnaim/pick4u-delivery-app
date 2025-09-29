@@ -7,7 +7,9 @@ import {
   updateProfile,
   User,
   PhoneAuthProvider,
-  signInWithCredential
+  signInWithCredential,
+  ConfirmationResult,
+  signInWithPhoneNumber // FIX: import missing symbol
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
 import { auth, googleProvider, db, setupRecaptcha } from '../config/firebase';
@@ -19,6 +21,7 @@ export interface UserProfile {
   phoneNumber: string;
   city: string;
   community: string;
+  communities?: string[]; // תמיכה בריבוי קהילות
   address: string;
   isCollector: boolean;
   rating: number;
@@ -84,6 +87,7 @@ class AuthService {
           phoneNumber: '',
           city: '',
           community: '',
+          communities: [], // ברירת מחדל ללא קהילות נוספות
           address: '',
           isCollector: false,
           rating: 5.0,
@@ -115,7 +119,7 @@ class AuthService {
   }
 
   // Verify Phone Code
-  async verifyPhoneCode(confirmationResult: any, code: string, profile?: Partial<UserProfile>) {
+  async verifyPhoneCode(confirmationResult: ConfirmationResult, code: string, profile?: Partial<UserProfile>) {
     try {
       const result = await confirmationResult.confirm(code);
       const user = result.user;

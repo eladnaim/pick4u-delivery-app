@@ -1,337 +1,303 @@
 import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { MapPin, Package, Clock, DollarSign, Phone, Search, Filter, MessageCircle } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { MapPin, Clock, Package, DollarSign, MessageCircle, Star, Bell, User as UserIcon } from 'lucide-react';
+import { User } from '@/types';
 import { toast } from 'sonner';
-import { User, PickupRequest, Chat } from '@/types';
-import ChatInterface from '@/components/ChatInterface';
 
-interface CollectorDashboardProps {
+export interface CollectorDashboardProps {
   user: User;
+  onOpenChat?: (req: { id: string; title: string; suggestedPrice?: number | null; userId: string }) => void;
 }
 
-export default function CollectorDashboard({ user }: CollectorDashboardProps) {
-  const [activeChat, setActiveChat] = useState<Chat | null>(null);
-  const [selectedRequest, setSelectedRequest] = useState<PickupRequest | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterCity, setFilterCity] = useState('all');
-  const [filterUrgency, setFilterUrgency] = useState('all');
+// Mock data for pickup requests
+const mockRequests = [
+  {
+    id: '1',
+    requesterId: 'user_sarah_cohen',
+    requesterName: 'שרה כהן',
+    pickupLocation: 'דואר ישראל - סניף דיזנגוף',
+    deliveryAddress: 'רחוב הרצל 15, תל אביב',
+    packageType: 'חבילה קטנה',
+    urgency: 'regular',
+    maxPrice: 25,
+    distance: '1.2 ק״מ',
+    timeAgo: 'לפני 30 דקות',
+    rating: 4.8,
+    community: 'קהילת תל אביב'
+  },
+  {
+    id: '2',
+    requesterId: 'user_david_levi',
+    requesterName: 'דוד לוי',
+    pickupLocation: 'חנות האלקטרוניקה - קניון עזריאלי',
+    deliveryAddress: 'שדרות רוטשילד 45, תל אביב',
+    packageType: 'חבילה בינונית',
+    urgency: 'urgent',
+    maxPrice: 40,
+    distance: '2.1 ק״מ',
+    timeAgo: 'לפני שעה',
+    rating: 4.9,
+    community: 'קהילת רמת גן'
+  }
+];
 
-  // Sample pickup requests - in real app, this would come from API
-  const [availableRequests] = useState<PickupRequest[]>([
-    {
-      id: '1',
-      title: 'איסוף חבילה מסניף דואר',
-      description: 'חבילה קטנה מסניף דואר ברחוב הרצל',
-      pickupLocation: 'רחוב הרצל 45',
-      pickupCity: user.city,
-      deliveryLocation: user.address,
-      deliveryCity: user.city,
-      packageSize: 'small',
-      urgency: 'normal',
-      suggestedPrice: 25,
-      contactPhone: '050-1234567',
-      notes: 'זמין לאיסוף בין 9:00-17:00',
-      requesterId: 'user_1',
-      requesterName: 'יוסי כהן',
-      status: 'open',
-      createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
-    },
-    {
-      id: '2',
-      title: 'איסוף מרקחת - תרופות',
-      description: 'תרופות מבית מרקחת סופר-פארם',
-      pickupLocation: 'קניון עזריאלי',
-      pickupCity: user.city,
-      deliveryLocation: 'רחוב בן גוריון 12',
-      deliveryCity: user.city,
-      packageSize: 'small',
-      urgency: 'high',
-      suggestedPrice: 40,
-      contactPhone: '052-9876543',
-      notes: 'דחוף! אדם מבוגר זקוק לתרופות',
-      requesterId: 'user_2',
-      requesterName: 'מרים לוי',
-      status: 'open',
-      createdAt: new Date(Date.now() - 30 * 60 * 1000).toISOString()
-    },
-    {
-      id: '3',
-      title: 'איסוף מחנות אלקטרוניקה',
-      description: 'רמקול בלוטוס שהוזמן אונליין',
-      pickupLocation: 'רחוב אלנבי 123',
-      pickupCity: user.city,
-      deliveryLocation: 'שכונת נווה שאנן',
-      deliveryCity: user.city,
-      packageSize: 'medium',
-      urgency: 'low',
-      suggestedPrice: 30,
-      contactPhone: '054-5555555',
-      notes: 'גמיש בזמנים',
-      requesterId: 'user_3',
-      requesterName: 'דני אברהם',
-      status: 'open',
-      createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString()
-    }
-  ]);
+export default function CollectorDashboard({ user, onOpenChat }: CollectorDashboardProps) {
+  const [selectedRequest, setSelectedRequest] = useState<string | null>(null);
+  const [selectedArea, setSelectedArea] = useState<string>('');
+  const [additionalLocation, setAdditionalLocation] = useState<string>('');
+  const [showAreaRequest, setShowAreaRequest] = useState(false);
 
-  const handleAcceptRequest = (request: PickupRequest) => {
-    // Create a new chat
-    const newChat: Chat = {
-      id: `chat_${Date.now()}`,
-      participants: [user.id, request.requesterId],
-      pickupRequestId: request.id,
-      createdAt: new Date().toISOString()
-    };
-
-    setActiveChat(newChat);
-    setSelectedRequest(request);
-    toast.success('הצטרפת לבקשה! נפתח צ\'אט לתיאום פרטים');
-  };
+  // קהילות המשתמש הרשום + אפשרות לבחור מקום נוסף
+  const userCommunities = user.communities || (user.community ? [user.community] : ['תל אביב מרכז']);
+  const communityAreas = userCommunities; // כל הקהילות שהמשתמש מנוי עליהן
 
   const getUrgencyColor = (urgency: string) => {
     switch (urgency) {
-      case 'high': return 'bg-red-100 text-red-800';
-      case 'normal': return 'bg-blue-100 text-blue-800';
-      case 'low': return 'bg-gray-100 text-gray-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'immediate': return 'bg-red-100 text-red-800 border-red-200';
+      case 'urgent': return 'bg-orange-100 text-orange-800 border-orange-200';
+      case 'regular': return 'bg-blue-100 text-blue-800 border-blue-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
   const getUrgencyText = (urgency: string) => {
     switch (urgency) {
-      case 'high': return 'דחוף';
-      case 'normal': return 'רגיל';
-      case 'low': return 'לא דחוף';
-      default: return 'רגיל';
+      case 'immediate': return 'מיידי';
+      case 'urgent': return 'דחוף';
+      case 'regular': return 'רגיל';
+      default: return 'לא דחוף';
     }
   };
 
-  const getSizeText = (size: string) => {
-    switch (size) {
-      case 'small': return 'קטן';
-      case 'medium': return 'בינוני';
-      case 'large': return 'גדול';
-      default: return 'קטן';
-    }
+  const openChatFor = (request: typeof mockRequests[number]) => {
+    const title = `בקשה #${request.id} • ${request.packageType} • ${request.pickupLocation} → ${request.deliveryAddress}`;
+    onOpenChat?.({ id: request.id, title, suggestedPrice: request.maxPrice, userId: request.requesterId });
   };
 
-  const filteredRequests = availableRequests.filter(request => {
-    const matchesSearch = request.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         request.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCity = filterCity === 'all' || request.pickupCity === filterCity;
-    const matchesUrgency = filterUrgency === 'all' || request.urgency === filterUrgency;
+  const handleAcceptRequest = (requestId: string) => {
+    setSelectedRequest(requestId);
+    const request = mockRequests.find(r => r.id === requestId);
+    if (request) openChatFor(request);
+  };
+
+  const handleAreaPickupRequest = () => {
+    if (!selectedArea && !additionalLocation) {
+      toast.error('אנא בחר קהילה או הזן מקום נוסף');
+      return;
+    }
     
-    return matchesSearch && matchesCity && matchesUrgency;
-  });
+    const location = additionalLocation || selectedArea;
+    // שליחת התרעה לקהילה או למקום הנוסף
+    toast.success(`נשלחה התרעה ש${user.name} זמין לאיסוף ב${location}!`);
+    setShowAreaRequest(false);
+    setSelectedArea('');
+    setAdditionalLocation('');
+  };
 
   return (
-    <>
-      <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Package className="w-5 h-5" />
-              בקשות איסוף זמינות
-            </CardTitle>
-            <CardDescription>
-              בחר בקשות איסוף באזור שלך והתחל להרוויח
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {/* Search and Filters */}
-            <div className="flex gap-4 mb-6">
-              <div className="flex-1">
-                <div className="relative">
-                  <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+    <div className="max-w-4xl mx-auto">
+      <Card className="bg-white/80 backdrop-blur-sm border-0 rounded-3xl shadow-xl mb-8">
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl mb-2 bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent font-bold">
+            בקשות איסוף באזור שלך
+          </CardTitle>
+          <CardDescription className="text-gray-500 text-md">
+            כאן תוכל למצוא בקשות רלוונטיות עבורך
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="text-center">
+          <Button 
+            onClick={() => setShowAreaRequest(!showAreaRequest)}
+            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 py-3 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300"
+          >
+            <Bell className="w-5 h-5 ml-2" />
+            בקשת איסוף באזור
+          </Button>
+          
+          {showAreaRequest && (
+            <div className="mt-6 p-6 bg-blue-50 rounded-2xl border-2 border-blue-200">
+              <h3 className="text-lg font-bold text-gray-800 mb-4">בחר מיקום לאיסוף</h3>
+              <div className="flex flex-col gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">הקהילות שלך:</label>
+                  <Select value={selectedArea} onValueChange={setSelectedArea}>
+                    <SelectTrigger className="rounded-xl">
+                      <SelectValue placeholder="בחר קהילה לאיסוף" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {communityAreas.map((area) => (
+                        <SelectItem key={area} value={area}>
+                          {area}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="text-center text-gray-500 font-medium">או</div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">מקום נוסף:</label>
                   <Input
-                    placeholder="חפש בקשות..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pr-10"
+                    value={additionalLocation}
+                    onChange={(e) => setAdditionalLocation(e.target.value)}
+                    placeholder="הזן מיקום נוסף (למשל: רמת גן, בני ברק...)"
+                    className="rounded-xl"
                   />
                 </div>
-              </div>
-              <Select value={filterCity} onValueChange={setFilterCity}>
-                <SelectTrigger className="w-40">
-                  <SelectValue placeholder="עיר" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">כל הערים</SelectItem>
-                  <SelectItem value={user.city}>{user.city}</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={filterUrgency} onValueChange={setFilterUrgency}>
-                <SelectTrigger className="w-32">
-                  <SelectValue placeholder="דחיפות" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">הכל</SelectItem>
-                  <SelectItem value="high">דחוף</SelectItem>
-                  <SelectItem value="normal">רגיל</SelectItem>
-                  <SelectItem value="low">לא דחוף</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Stats */}
-            <div className="grid md:grid-cols-3 gap-4 mb-6">
-              <div className="text-center p-4 bg-blue-50 rounded-lg">
-                <div className="text-2xl font-bold text-blue-600">{filteredRequests.length}</div>
-                <div className="text-sm text-gray-600">בקשות זמינות</div>
-              </div>
-              <div className="text-center p-4 bg-green-50 rounded-lg">
-                <div className="text-2xl font-bold text-green-600">
-                  ₪{filteredRequests.reduce((sum, req) => sum + req.suggestedPrice, 0)}
+                
+                <div className="flex gap-3 justify-center mt-4">
+                  <Button 
+                    onClick={handleAreaPickupRequest}
+                    className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-xl"
+                  >
+                    🚚 שלח התרעה - זמין לאיסוף
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    onClick={() => {
+                      setShowAreaRequest(false);
+                      setSelectedArea('');
+                      setAdditionalLocation('');
+                    }}
+                    className="px-6 py-2 rounded-xl"
+                  >
+                    ביטול
+                  </Button>
                 </div>
-                <div className="text-sm text-gray-600">סה"כ רווח פוטנציאלי</div>
-              </div>
-              <div className="text-center p-4 bg-purple-50 rounded-lg">
-                <div className="text-2xl font-bold text-purple-600">
-                  {filteredRequests.filter(req => req.urgency === 'high').length}
-                </div>
-                <div className="text-sm text-gray-600">בקשות דחופות</div>
               </div>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Available Requests */}
-        <div className="space-y-4">
-          {filteredRequests.length === 0 ? (
-            <Card>
-              <CardContent className="text-center py-8">
-                <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500">אין בקשות איסוף זמינות כרגע</p>
-                <p className="text-sm text-gray-400 mt-2">נסה לשנות את הפילטרים או לחזור מאוחר יותר</p>
-              </CardContent>
-            </Card>
-          ) : (
-            filteredRequests.map((request) => (
-              <Card key={request.id} className="hover:shadow-lg transition-shadow">
-                <CardContent className="pt-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <h3 className="font-semibold text-lg">{request.title}</h3>
-                        <Badge className={getUrgencyColor(request.urgency)}>
-                          {getUrgencyText(request.urgency)}
-                        </Badge>
-                        <Badge variant="outline">
-                          {getSizeText(request.packageSize)}
-                        </Badge>
-                      </div>
-                      <p className="text-gray-600 mb-3">{request.description}</p>
-                    </div>
-                    <div className="text-left">
-                      <div className="text-2xl font-bold text-green-600">₪{request.suggestedPrice}</div>
-                      <div className="text-sm text-gray-500">מחיר מוצע</div>
-                    </div>
-                  </div>
-
-                  <div className="grid md:grid-cols-2 gap-4 text-sm mb-4">
-                    <div className="flex items-center gap-2">
-                      <MapPin className="w-4 h-4 text-blue-600" />
-                      <div>
-                        <p className="font-medium">איסוף:</p>
-                        <p className="text-gray-600">{request.pickupLocation}, {request.pickupCity}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <MapPin className="w-4 h-4 text-green-600" />
-                      <div>
-                        <p className="font-medium">מסירה:</p>
-                        <p className="text-gray-600">{request.deliveryLocation}, {request.deliveryCity}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {request.notes && (
-                    <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-                      <p className="text-sm"><strong>הערות:</strong> {request.notes}</p>
-                    </div>
-                  )}
-
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4 text-sm text-gray-500">
-                      <div className="flex items-center gap-1">
-                        <Clock className="w-4 h-4" />
-                        <span>לפני {Math.floor((Date.now() - new Date(request.createdAt).getTime()) / (1000 * 60))} דקות</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Phone className="w-4 h-4" />
-                        <span>{request.requesterName}</span>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => handleAcceptRequest(request)}
-                      >
-                        <MessageCircle className="w-4 h-4 ml-1" />
-                        התחל צ'אט
-                      </Button>
-                      <Button 
-                        size="sm"
-                        onClick={() => handleAcceptRequest(request)}
-                        className="bg-green-600 hover:bg-green-700"
-                      >
-                        הצטרף לבקשה
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
           )}
-        </div>
+        </CardContent>
+      </Card>
 
-        {/* Tips for Collectors */}
-        <Card>
-          <CardHeader>
-            <CardTitle>טיפים למאספים</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid md:grid-cols-2 gap-4 text-sm">
-              <div className="space-y-2">
-                <h4 className="font-medium">💡 איך להרוויח יותר:</h4>
-                <ul className="space-y-1 text-gray-600">
-                  <li>• התמחה באזור מסוים שאתה מכיר</li>
-                  <li>• בחר בקשות דחופות - הן משלמות יותר</li>
-                  <li>• בנה מוניטין עם דירוגים גבוהים</li>
-                  <li>• היה זמין בשעות העומס</li>
-                </ul>
+      <div className="grid gap-6">
+        {mockRequests
+          .filter(request => userCommunities.includes(request.community)) // מסנן רק בקשות מהקהילות שהמשתמש מנוי עליהן
+          .map((request) => (
+          <Card key={request.id} className="hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02] bg-white/90 backdrop-blur-sm border border-gray-200/80 rounded-3xl overflow-hidden">
+            <CardContent className="p-8">
+              <div className="flex justify-between items-start mb-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-100 to-indigo-200 flex items-center justify-center">
+                    <UserIcon className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-xl text-gray-800">{request.requesterName}</h3>
+                    <div className="flex items-center gap-2 mt-1">
+                      <div className="flex items-center gap-1">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Star 
+                            key={star} 
+                            className={`w-4 h-4 ${star <= request.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} 
+                          />
+                        ))}
+                      </div>
+                      <span className="text-sm text-gray-600">({request.rating})</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-3">
+                  <Badge className={`${getUrgencyColor(request.urgency)} font-medium`}>
+                    <Clock className="w-3 h-3 ml-1" />
+                    {getUrgencyText(request.urgency)}
+                  </Badge>
+                  <span className="text-sm text-gray-500">{request.timeAgo}</span>
+                </div>
               </div>
-              <div className="space-y-2">
-                <h4 className="font-medium">🛡️ בטיחות ואמינות:</h4>
-                <ul className="space-y-1 text-gray-600">
-                  <li>• תמיד אמת פרטי קשר לפני איסוף</li>
-                  <li>• צלם את החבילה לפני ואחרי</li>
-                  <li>• השתמש במעקב מיקום</li>
-                  <li>• דווח על בעיות למערכת</li>
-                </ul>
+
+              <div className="grid md:grid-cols-2 gap-6 mb-6">
+                <div className="space-y-4">
+                  <div className="flex items-start gap-3">
+                    <MapPin className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-gray-800">מיקום איסוף:</p>
+                      <p className="text-gray-600">{request.pickupLocation}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start gap-3">
+                    <MapPin className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-gray-800">כתובת משלוח:</p>
+                      <p className="text-gray-600">{request.deliveryAddress}</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <Package className="w-5 h-5 text-purple-600" />
+                    <div>
+                      <p className="font-medium text-gray-800">סוג חבילה:</p>
+                      <p className="text-gray-600">{request.packageType}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-3">
+                    <MapPin className="w-5 h-5 text-blue-600" />
+                    <div>
+                      <p className="font-medium text-gray-800">קהילה:</p>
+                      <p className="text-gray-600">{request.community}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-3">
+                    <DollarSign className="w-5 h-5 text-green-600" />
+                    <div>
+                      <p className="font-medium text-gray-800">מחיר מקסימלי:</p>
+                      <p className="text-gray-600 font-bold">₪{request.maxPrice}</p>
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+
+              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-blue-50 rounded-2xl mb-6">
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-gray-600" />
+                  <span className="text-sm font-medium text-gray-700">מרחק: {request.distance}</span>
+                </div>
+                <div className="text-sm text-gray-600">
+                  זמן נסיעה משוער: ~{Math.ceil(parseFloat(request.distance) * 3)} דקות
+                </div>
+              </div>
+
+              <div className="flex gap-4">
+                <Button 
+                  className="flex-1 h-12 rounded-xl bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 shadow-md hover:shadow-lg transition-all duration-300 font-semibold text-white"
+                  onClick={() => handleAcceptRequest(request.id)}
+                >
+                  <Package className="w-5 h-5 ml-2" />
+                  קבל את הבקשה
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="h-12 px-6 rounded-xl border-2 border-blue-200 hover:border-blue-300 bg-transparent hover:bg-blue-50 shadow-md hover:shadow-lg transition-all duration-300 text-blue-600 font-semibold"
+                  onClick={() => openChatFor(request)}
+                >
+                  <MessageCircle className="w-5 h-5 ml-2" />
+                  שלח הודעה
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
-      {/* Chat Interface */}
-      {activeChat && selectedRequest && (
-        <ChatInterface
-          user={user}
-          activeChat={activeChat}
-          pickupRequest={selectedRequest}
-          onClose={() => {
-            setActiveChat(null);
-            setSelectedRequest(null);
-          }}
-        />
+      {mockRequests.length === 0 && (
+        <Card className="bg-white/80 backdrop-blur-sm border-0 rounded-3xl shadow-xl">
+          <CardContent className="text-center py-16">
+            <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-xl font-bold text-gray-700 mb-2">אין בקשות חדשות באזור</h3>
+            <p className="text-gray-600">בקשות חדשות יופיעו כאן כשיהיו זמינות</p>
+          </CardContent>
+        </Card>
       )}
-    </>
+    </div>
   );
 }

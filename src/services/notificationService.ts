@@ -1,5 +1,5 @@
 // Push Notification Service
-import { messaging, requestNotificationPermission } from '../config/firebase';
+import { requestNotificationPermission } from '../config/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../config/firebase';
 
@@ -12,10 +12,21 @@ export interface NotificationData {
     pickupRequestId?: string;
     chatId?: string;
     senderId?: string;
-    [key: string]: any;
+    [key: string]: string | undefined;
   };
   read: boolean;
   createdAt: Date;
+}
+
+interface FCMPayload {
+  notification: {
+    title: string;
+    body: string;
+  };
+  data?: {
+    type?: string;
+    [key: string]: string | undefined;
+  };
 }
 
 class NotificationService {
@@ -167,7 +178,7 @@ class NotificationService {
   }
 
   // Handle incoming FCM messages
-  handleForegroundMessage(payload: any) {
+  handleForegroundMessage(payload: FCMPayload) {
     console.log('Received foreground message:', payload);
     
     const { title, body } = payload.notification;

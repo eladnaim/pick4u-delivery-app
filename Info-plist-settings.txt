@@ -1,0 +1,47 @@
+הגדרות Info.plist עבור Pick4U iOS App
+==========================================
+
+כדי לאפשר טעינה של האפליקציה מהשרת המקומי, יש להוסיף את ההגדרות הבאות ל-Info.plist:
+
+1. פתח את הקובץ Info.plist בפרויקט ה-iOS שלך
+2. לחץ על הסימן + ליד Information Property List
+3. הוסף מפתח חדש: NSAppTransportSecurity (סוג: Dictionary)
+4. תחת NSAppTransportSecurity, הוסף: NSExceptionDomains (סוג: Dictionary)
+5. תחת NSExceptionDomains, הוסף שני מפתחות:
+
+מפתח ראשון: 10.0.0.10 (סוג: Dictionary)
+תחתיו:
+- NSExceptionAllowsInsecureHTTPLoads: YES (Boolean)
+- NSExceptionMinimumTLSVersion: TLSv1.0 (String)
+
+מפתח שני: localhost (סוג: Dictionary)
+תחתיו:
+- NSExceptionAllowsInsecureHTTPLoads: YES (Boolean)
+
+או העתק את הקוד XML הבא ישירות ל-Info.plist:
+
+<key>NSAppTransportSecurity</key>
+<dict>
+    <key>NSExceptionDomains</key>
+    <dict>
+        <key>10.0.0.10</key>
+        <dict>
+            <key>NSExceptionAllowsInsecureHTTPLoads</key>
+            <true/>
+            <key>NSExceptionMinimumTLSVersion</key>
+            <string>TLSv1.0</string>
+        </dict>
+        <key>localhost</key>
+        <dict>
+            <key>NSExceptionAllowsInsecureHTTPLoads</key>
+            <true/>
+        </dict>
+    </dict>
+</dict>
+
+הסבר:
+-------
+ההגדרות האלה מאפשרות לאפליקציה לטעון תוכן מ-HTTP (לא מאובטח) מהשרתים המקומיים שלך.
+זה נחוץ כי iOS חוסם כברירת מחדל חיבורים לא מאובטחים.
+
+לאחר הוספת ההגדרות, בנה מחדש את הפרויקט והאפליקציה תוכל לטעון את האתר שלך.

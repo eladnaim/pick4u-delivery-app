@@ -1,0 +1,101 @@
+<svg viewBox="0 0 375 812" xmlns="http://www.w3.org/2000/svg">
+  <!-- Phone Frame -->
+  <rect width="375" height="812" rx="40" fill="#000" stroke="#333" stroke-width="2"/>
+  <rect x="10" y="10" width="355" height="792" rx="30" fill="#f8fafc"/>
+  
+  <!-- Status Bar -->
+  <rect x="10" y="10" width="355" height="44" rx="30" fill="#1e293b"/>
+  <text x="30" y="35" fill="white" font-family="Arial" font-size="14" font-weight="bold">9:41</text>
+  <text x="320" y="35" fill="white" font-family="Arial" font-size="14">100%</text>
+  
+  <!-- Header with AI Assistant -->
+  <rect x="10" y="54" width="355" height="80" fill="#3b82f6"/>
+  <text x="30" y="85" fill="white" font-family="Arial" font-size="20" font-weight="bold">Pick4U Pro</text>
+  <text x="30" y="105" fill="#e0e7ff" font-family="Arial" font-size="12">עם בינה מלאכותית חכמה</text>
+  
+  <!-- AI Assistant Icon -->
+  <circle cx="320" cy="94" r="20" fill="#8b5cf6"/>
+  <text x="315" y="99" fill="white" font-family="Arial" font-size="12">🤖</text>
+  
+  <!-- Smart Dashboard -->
+  <rect x="20" y="150" width="335" height="120" rx="12" fill="white" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="30" y="175" fill="#1e293b" font-family="Arial" font-size="16" font-weight="bold">לוח בקרה חכם</text>
+  
+  <!-- Stats Cards -->
+  <rect x="30" y="185" width="95" height="70" rx="8" fill="#f0f9ff"/>
+  <text x="35" y="205" fill="#0369a1" font-family="Arial" font-size="12" font-weight="bold">בקשות פעילות</text>
+  <text x="35" y="225" fill="#0369a1" font-family="Arial" font-size="24" font-weight="bold">12</text>
+  <text x="35" y="245" fill="#0369a1" font-family="Arial" font-size="10">↑ 23% השבוע</text>
+  
+  <rect x="140" y="185" width="95" height="70" rx="8" fill="#f0fdf4"/>
+  <text x="145" y="205" fill="#166534" font-family="Arial" font-size="12" font-weight="bold">רווח חודשי</text>
+  <text x="145" y="225" fill="#166534" font-family="Arial" font-size="24" font-weight="bold">₪850</text>
+  <text x="145" y="245" fill="#166534" font-family="Arial" font-size="10">↑ 15% מהחודש</text>
+  
+  <rect x="250" y="185" width="95" height="70" rx="8" fill="#fef7ff"/>
+  <text x="255" y="205" fill="#86198f" font-family="Arial" font-size="12" font-weight="bold">דירוג AI</text>
+  <text x="255" y="225" fill="#86198f" font-family="Arial" font-size="24" font-weight="bold">4.9⭐</text>
+  <text x="255" y="245" fill="#86198f" font-family="Arial" font-size="10">מבוסס על ביצועים</text>
+  
+  <!-- AI Recommendations -->
+  <rect x="20" y="285" width="335" height="100" rx="12" fill="#fef3c7" stroke="#f59e0b" stroke-width="1"/>
+  <text x="30" y="310" fill="#92400e" font-family="Arial" font-size="14" font-weight="bold">💡 המלצות AI</text>
+  <text x="30" y="330" fill="#92400e" font-family="Arial" font-size="12">• זמן מיטבי לאיסוף: 14:00-16:00</text>
+  <text x="30" y="350" fill="#92400e" font-family="Arial" font-size="12">• מחיר מומלץ לאזור זה: ₪25-35</text>
+  <text x="30" y="370" fill="#92400e" font-family="Arial" font-size="12">• 3 בקשות דומות באזור עכשיו</text>
+  
+  <!-- Smart Matching -->
+  <rect x="20" y="400" width="335" height="140" rx="12" fill="white" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="30" y="425" fill="#1e293b" font-family="Arial" font-size="16" font-weight="bold">התאמה חכמה</text>
+  
+  <!-- Match Card -->
+  <rect x="30" y="435" width="315" height="90" rx="8" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1"/>
+  <circle cx="55" cy="465" r="15" fill="#3b82f6"/>
+  <text x="50" y="470" fill="white" font-family="Arial" font-size="10">👤</text>
+  
+  <text x="80" y="450" fill="#1e293b" font-family="Arial" font-size="14" font-weight="bold">דני כהן</text>
+  <text x="80" y="465" fill="#64748b" font-family="Arial" font-size="12">רמת גן → תל אביב</text>
+  <text x="80" y="480" fill="#64748b" font-family="Arial" font-size="12">התאמה: 95% | מרחק: 2.3 ק"מ</text>
+  <text x="80" y="495" fill="#059669" font-family="Arial" font-size="12" font-weight="bold">₪30 (מחיר מומלץ AI)</text>
+  
+  <rect x="280" y="450" width="55" height="25" rx="12" fill="#10b981"/>
+  <text x="295" y="465" fill="white" font-family="Arial" font-size="11">קבל</text>
+  
+  <!-- Route Optimization -->
+  <rect x="20" y="555" width="335" height="100" rx="12" fill="white" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="30" y="580" fill="#1e293b" font-family="Arial" font-size="16" font-weight="bold">🗺️ מסלול מיטבי</text>
+  <text x="30" y="600" fill="#64748b" font-family="Arial" font-size="12">AI תכנן מסלול חכם עבור 4 איסופים:</text>
+  <text x="30" y="620" fill="#3b82f6" font-family="Arial" font-size="12">רמת גן → גבעתיים → תל אביב → רמת השרון</text>
+  <text x="30" y="635" fill="#059669" font-family="Arial" font-size="12" font-weight="bold">חיסכון: 45 דקות, ₪18 בדלק</text>
+  
+  <!-- Quick Actions -->
+  <rect x="20" y="670" width="335" height="80" rx="12" fill="white" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="30" y="695" fill="#1e293b" font-family="Arial" font-size="16" font-weight="bold">פעולות מהירות</text>
+  
+  <rect x="30" y="705" width="70" height="35" rx="8" fill="#3b82f6"/>
+  <text x="50" y="725" fill="white" font-family="Arial" font-size="11">בקשה חדשה</text>
+  
+  <rect x="110" y="705" width="70" height="35" rx="8" fill="#8b5cf6"/>
+  <text x="130" y="725" fill="white" font-family="Arial" font-size="11">AI צ'אט</text>
+  
+  <rect x="190" y="705" width="70" height="35" rx="8" fill="#10b981"/>
+  <text x="210" y="725" fill="white" font-family="Arial" font-size="11">מסלול חכם</text>
+  
+  <rect x="270" y="705" width="70" height="35" rx="8" fill="#f59e0b"/>
+  <text x="290" y="725" fill="white" font-family="Arial" font-size="11">דוחות</text>
+  
+  <!-- Bottom Navigation -->
+  <rect x="10" y="760" width="355" height="52" rx="0" fill="#1e293b"/>
+  
+  <circle cx="75" cy="786" r="8" fill="#3b82f6"/>
+  <text x="70" y="790" fill="white" font-family="Arial" font-size="8">🏠</text>
+  
+  <circle cx="150" cy="786" r="8" fill="#64748b"/>
+  <text x="145" y="790" fill="#94a3b8" font-family="Arial" font-size="8">💬</text>
+  
+  <circle cx="225" cy="786" r="8" fill="#64748b"/>
+  <text x="220" y="790" fill="#94a3b8" font-family="Arial" font-size="8">📦</text>
+  
+  <circle cx="300" cy="786" r="8" fill="#64748b"/>
+  <text x="295" y="790" fill="#94a3b8" font-family="Arial" font-size="8">👤</text>
+</svg>

@@ -1,459 +1,306 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Progress } from '@/components/ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  User, 
-  Shield, 
-  Star, 
-  Package, 
-  TrendingUp, 
-  Award, 
-  Calendar,
-  Phone,
-  Mail,
-  MapPin,
-  Camera,
-  Edit
-} from 'lucide-react';
-import { toast } from 'sonner';
-import { User as UserType } from '@/types';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { User } from '@/types';
+import { User as UserIcon, Phone, MapPin, Building } from 'lucide-react';
+import { getCitiesSync, loadCities } from '@/data/cities';
+import CityAutocomplete from '@/components/CityAutocomplete';
 
 interface UserProfileProps {
-  user: UserType;
-  onUpdate: (user: UserType) => void;
+  user: User;
+  onUpdate: (user: User) => void;
 }
+
+// Avatar options
+const avatarOptions = [
+  '👤', '👨', '👩', '🧑', '👨‍💼', '👩‍💼', '👨‍🎓', '👩‍🎓',
+  '👨‍🔧', '👩‍🔧', '👨‍⚕️', '👩‍⚕️', '👨‍🍳', '👩‍🍳', '👨‍🎨', '👩‍🎨',
+  '🧔', '👱‍♂️', '👱‍♀️', '👨‍🦱', '👩‍🦱', '👨‍🦳', '👩‍🦳', '👨‍🦲',
+  '🙂', '😊', '😎', '🤓', '🥸', '😇', '🤠', '🥳'
+];
 
 export default function UserProfile({ user, onUpdate }: UserProfileProps) {
   const [isEditing, setIsEditing] = useState(false);
-  const [editData, setEditData] = useState({
-    name: user.name,
-    phone: user.phone,
-    email: user.email || '',
-    address: user.address
+  const [formData, setFormData] = useState<User>({
+    ...user,
+    communities: user.communities || (user.community ? [user.community] : [])
   });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  // Dynamic cities list
+  const [cities, setCities] = useState<string[]>(getCitiesSync());
+  const [newCommunity, setNewCommunity] = useState('');
 
-  const stats = {
-    totalDeliveries: 12,
-    successRate: 98,
-    averageRating: 4.7,
-    totalEarnings: 340,
-    thisMonthEarnings: 85,
-    responseTime: '< 5 דק'
-  };
+  useEffect(() => {
+    let mounted = true;
+    loadCities().then((list) => { if (mounted) setCities(list); }).catch(() => {});
+    return () => { mounted = false; };
+  }, []);
 
-  const recentActivity = [
-    {
-      id: '1',
-      type: 'delivery_completed',
-      description: 'השלמת משלוח מסניף דואר רמת גן',
-      amount: 15,
-      rating: 5,
-      date: '2024-01-15'
-    },
-    {
-      id: '2',
-      type: 'delivery_completed',
-      description: 'איסוף מרמי לוי לשרה לוי',
-      amount: 25,
-      rating: 4,
-      date: '2024-01-14'
-    },
-    {
-      id: '3',
-      type: 'delivery_completed',
-      description: 'מסירת תרופות מסופר פארם',
-      amount: 20,
-      rating: 5,
-      date: '2024-01-13'
-    }
-  ];
-
-  const achievements = [
-    {
-      id: '1',
-      title: 'מאסף מהימן',
-      description: '10 משלוחים מוצלחים',
-      icon: Shield,
-      earned: true,
-      progress: 100
-    },
-    {
-      id: '2',
-      title: 'כוכב השירות',
-      description: 'דירוג ממוצע מעל 4.5',
-      icon: Star,
-      earned: true,
-      progress: 100
-    },
-    {
-      id: '3',
-      title: 'מאסף מהיר',
-      description: 'זמן תגובה מתחת ל-5 דקות',
-      icon: TrendingUp,
-      earned: true,
-      progress: 100
-    },
-    {
-      id: '4',
-      title: 'מאסף וותיק',
-      description: '50 משלוחים מוצלחים',
-      icon: Award,
-      earned: false,
-      progress: 24
-    }
-  ];
-
-  const handleSaveProfile = () => {
-    const updatedUser: UserType = { ...user, ...editData };
-    onUpdate(updatedUser);
+  const handleSave = async () => {
+    onUpdate(formData);
     setIsEditing(false);
-    toast.success('הפרופיל עודכן בהצלחה');
   };
 
-  const renderStars = (rating: number) => {
-    return '★'.repeat(Math.floor(rating)) + '☆'.repeat(5 - Math.floor(rating));
+  const addCommunity = () => {
+    const value = newCommunity.trim();
+    if (!value) return;
+    const exists = (formData.communities || []).some(c => c === value) || formData.community === value;
+    if (exists) {
+      setNewCommunity('');
+      return;
+    }
+    setFormData({
+      ...formData,
+      communities: [...(formData.communities || []), value]
+    });
+    setNewCommunity('');
   };
+
+  const removeCommunity = (name: string) => {
+    setFormData({
+      ...formData,
+      communities: (formData.communities || []).filter(c => c !== name)
+    });
+  };
+
+  const allCommunitiesToShow = Array.from(new Set([
+    ...(formData.communities || []),
+    ...(formData.community ? [formData.community] : [])
+  ]));
 
   return (
-    <div className="space-y-6">
-      {/* Profile Header */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex items-start gap-6">
-            <div className="relative">
-              <Avatar className="w-24 h-24">
-                <AvatarImage src={user.profilePhoto || undefined} />
-                <AvatarFallback className="text-2xl">
-                  {user.name.charAt(0)}
-                </AvatarFallback>
-              </Avatar>
-              <Button
-                size="sm"
-                variant="outline"
-                className="absolute -bottom-2 -right-2 rounded-full w-8 h-8 p-0"
-              >
-                <Camera className="w-4 h-4" />
-              </Button>
-            </div>
-            
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-2">
-                <h1 className="text-2xl font-bold">{user.name}</h1>
-                {user.verified ? (
-                  <Badge className="bg-green-100 text-green-800">
-                    <Shield className="w-3 h-3 ml-1" />
-                    מאומת
-                  </Badge>
-                ) : (
-                  <Badge variant="outline" className="text-orange-600">
-                    ממתין לאימות
-                  </Badge>
-                )}
-              </div>
-              
-              <div className="flex items-center gap-4 text-sm text-gray-600 mb-4">
-                <span className="flex items-center gap-1">
-                  <Phone className="w-4 h-4" />
-                  {user.phone}
-                </span>
-                {user.email && (
-                  <span className="flex items-center gap-1">
-                    <Mail className="w-4 h-4" />
-                    {user.email}
-                  </span>
-                )}
-                <span className="flex items-center gap-1">
-                  <MapPin className="w-4 h-4" />
-                  {user.city}
-                </span>
-                <span className="flex items-center gap-1">
-                  <Calendar className="w-4 h-4" />
-                  חבר מאז {new Date(user.joinDate).toLocaleDateString('he-IL')}
-                </span>
-              </div>
-
-              <div className="flex items-center gap-6">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-600">{stats.totalDeliveries}</div>
-                  <div className="text-sm text-gray-600">משלוחים</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-yellow-600 flex items-center justify-center gap-1">
-                    {stats.averageRating}
-                    <Star className="w-5 h-5 fill-current" />
-                  </div>
-                  <div className="text-sm text-gray-600">דירוג ממוצע</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-green-600">{stats.successRate}%</div>
-                  <div className="text-sm text-gray-600">שיעור הצלחה</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-purple-600">₪{stats.totalEarnings}</div>
-                  <div className="text-sm text-gray-600">סה"כ הכנסות</div>
-                </div>
-              </div>
-            </div>
-
-            <Button
-              variant="outline"
-              onClick={() => setIsEditing(!isEditing)}
-            >
-              <Edit className="w-4 h-4 ml-1" />
-              ערוך פרופיל
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="overview">סקירה</TabsTrigger>
-          <TabsTrigger value="activity">פעילות</TabsTrigger>
-          <TabsTrigger value="achievements">הישגים</TabsTrigger>
-          <TabsTrigger value="settings">הגדרות</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="overview" className="space-y-6">
-          <div className="grid md:grid-cols-2 gap-6">
-            {/* Performance Stats */}
-            <Card>
-              <CardHeader>
-                <CardTitle>ביצועים החודש</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span>הכנסות החודש</span>
-                  <span className="font-bold text-green-600">₪{stats.thisMonthEarnings}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span>זמן תגובה ממוצע</span>
-                  <span className="font-bold">{stats.responseTime}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span>שיעור הצלחה</span>
-                  <span className="font-bold">{stats.successRate}%</span>
-                </div>
-                <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <span>התקדמות למאסף וותיק</span>
-                    <span className="text-sm text-gray-600">{stats.totalDeliveries}/50</span>
-                  </div>
-                  <Progress value={(stats.totalDeliveries / 50) * 100} className="h-2" />
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Recent Reviews */}
-            <Card>
-              <CardHeader>
-                <CardTitle>ביקורות אחרונות</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-3">
-                  <div className="border-b pb-3">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-yellow-500">{renderStars(5)}</span>
-                      <span className="text-sm font-medium">דני כהן</span>
-                    </div>
-                    <p className="text-sm text-gray-600">"שירוח מעולה ומהיר! ממליץ בחום"</p>
-                  </div>
-                  <div className="border-b pb-3">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-yellow-500">{renderStars(4)}</span>
-                      <span className="text-sm font-medium">שרה לוי</span>
-                    </div>
-                    <p className="text-sm text-gray-600">"הגיע בזמן ושמר על החבילה בטוב"</p>
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-yellow-500">{renderStars(5)}</span>
-                      <span className="text-sm font-medium">מיכל אברהם</span>
-                    </div>
-                    <p className="text-sm text-gray-600">"מאוד מקצועי ואמין"</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="activity" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>פעילות אחרונה</CardTitle>
-              <CardDescription>
-                היסטוריית המשלוחים והפעילות שלך
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {recentActivity.map((activity) => (
-                  <div key={activity.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <Package className="w-5 h-5 text-blue-500" />
-                      <div>
-                        <p className="font-medium">{activity.description}</p>
-                        <p className="text-sm text-gray-600">
-                          {new Date(activity.date).toLocaleDateString('he-IL')}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-left">
-                      <div className="font-bold text-green-600">₪{activity.amount}</div>
-                      <div className="text-yellow-500 text-sm">
-                        {renderStars(activity.rating)}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="achievements" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>הישגים ותגים</CardTitle>
-              <CardDescription>
-                הישגים שצברת במהלך השימוש בשירות
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid md:grid-cols-2 gap-4">
-                {achievements.map((achievement) => (
-                  <div
-                    key={achievement.id}
-                    className={`p-4 border rounded-lg ${
-                      achievement.earned ? 'bg-green-50 border-green-200' : 'bg-gray-50'
+    <Card className="bg-white/80 backdrop-blur-sm border-0 rounded-3xl shadow-xl" dir="rtl">
+      <CardHeader>
+        <CardTitle className="text-2xl bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent font-bold">
+          הפרופיל שלי
+        </CardTitle>
+        <CardDescription>
+          כאן תוכל לעדכן את פרטי הפרופיל שלך
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {isEditing ? (
+          <div className="space-y-4">
+            {/* Avatar Selection */}
+            <div>
+              <Label className="font-medium">בחר אווטר</Label>
+              <div className="grid grid-cols-8 gap-2 mt-2 p-3 border rounded-2xl bg-gray-50/80">
+                {avatarOptions.map((avatar, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={() => setFormData({ ...formData, avatar })}
+                    className={`w-10 h-10 text-2xl rounded-lg border-2 transition-all hover:scale-110 hover:shadow-lg ${
+                      formData.avatar === avatar 
+                        ? 'border-blue-500 bg-blue-100 shadow-md' 
+                        : 'border-gray-200 hover:border-gray-300'
                     }`}
                   >
-                    <div className="flex items-center gap-3 mb-2">
-                      <achievement.icon
-                        className={`w-6 h-6 ${
-                          achievement.earned ? 'text-green-600' : 'text-gray-400'
-                        }`}
-                      />
-                      <div>
-                        <h4 className="font-medium">{achievement.title}</h4>
-                        <p className="text-sm text-gray-600">{achievement.description}</p>
-                      </div>
-                    </div>
-                    {!achievement.earned && (
-                      <div className="mt-2">
-                        <div className="flex justify-between items-center mb-1">
-                          <span className="text-sm text-gray-600">התקדמות</span>
-                          <span className="text-sm text-gray-600">{achievement.progress}%</span>
-                        </div>
-                        <Progress value={achievement.progress} className="h-2" />
-                      </div>
-                    )}
-                  </div>
+                    {avatar}
+                  </button>
                 ))}
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+              <div className="mt-3 text-center">
+                <span className="text-sm text-gray-600">אווטר נבחר: </span>
+                <span className="text-3xl font-semibold">{formData.avatar || '👤'}</span>
+              </div>
+            </div>
 
-        <TabsContent value="settings" className="space-y-6">
-          {isEditing ? (
-            <Card>
-              <CardHeader>
-                <CardTitle>עריכת פרופיל</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="editName">שם מלא</Label>
-                    <Input
-                      id="editName"
-                      value={editData.name}
-                      onChange={(e) => setEditData(prev => ({ ...prev, name: e.target.value }))}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="editPhone">טלפון</Label>
-                    <Input
-                      id="editPhone"
-                      value={editData.phone}
-                      onChange={(e) => setEditData(prev => ({ ...prev, phone: e.target.value }))}
-                    />
-                  </div>
+            <div>
+              <Label htmlFor="name">שם מלא</Label>
+              <div className="relative">
+                <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Input
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="pl-10 rounded-xl"
+                />
+              </div>
+            </div>
+            
+            <div>
+              <Label htmlFor="phone">טלפון</Label>
+              <div className="relative">
+                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Input
+                  id="phone"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  className="pl-10 rounded-xl"
+                />
+              </div>
+            </div>
+            
+            <div>
+              <CityAutocomplete
+                value={formData.city}
+                onChange={(value) => setFormData({ ...formData, city: value })}
+                label="עיר"
+                placeholder="הקלד או בחר עיר..."
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="address">כתובת</Label>
+              <div className="relative">
+                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Input
+                  id="address"
+                  value={formData.address}
+                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                  className="pl-10 rounded-xl"
+                  placeholder="רחוב ומספר בית"
+                />
+              </div>
+            </div>
+
+            {/* Primary community */}
+            <div>
+              <Label htmlFor="community">הקהילה הראשית</Label>
+              <div className="relative">
+                <Building className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Input
+                  id="community"
+                  value={formData.community || ''}
+                  onChange={(e) => setFormData({ ...formData, community: e.target.value })}
+                  className="pl-10 rounded-xl"
+                  placeholder="לדוגמה: קהילת תל אביב"
+                />
+              </div>
+            </div>
+
+            {/* Additional communities (multi) */}
+            <div>
+              <Label className="font-medium">קהילות נוספות</Label>
+              <div className="flex gap-2 mt-2">
+                <Input
+                  value={newCommunity}
+                  onChange={(e) => setNewCommunity(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      addCommunity();
+                    }
+                  }}
+                  className="rounded-xl bg-white/80"
+                  placeholder="הוסף קהילה ולחץ אנטר"
+                />
+                <Button 
+                  type="button" 
+                  onClick={addCommunity} 
+                  className="rounded-xl whitespace-nowrap bg-blue-500 hover:bg-blue-600 text-white"
+                >
+                  הוסף
+                </Button>
+              </div>
+              {(formData.communities && formData.communities.length > 0) && (
+                <div className="flex flex-wrap gap-2 mt-3 border rounded-2xl p-3 bg-gray-50/80">
+                  {formData.communities.map((c) => (
+                    <span key={c} className="inline-flex items-center gap-2 bg-blue-100 text-blue-800 border border-blue-200/80 px-3 py-1.5 rounded-full text-sm font-medium">
+                      {c}
+                      <button 
+                        type="button" 
+                        onClick={() => removeCommunity(c)} 
+                        className="text-blue-600 hover:text-blue-800 hover:bg-blue-200 rounded-full w-5 h-5 flex items-center justify-center transition-colors"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
                 </div>
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="editEmail">אימייל</Label>
-                    <Input
-                      id="editEmail"
-                      type="email"
-                      value={editData.email}
-                      onChange={(e) => setEditData(prev => ({ ...prev, email: e.target.value }))}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="editAddress">כתובת</Label>
-                    <Input
-                      id="editAddress"
-                      value={editData.address}
-                      onChange={(e) => setEditData(prev => ({ ...prev, address: e.target.value }))}
-                    />
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <Button onClick={handleSaveProfile}>
-                    שמור שינויים
-                  </Button>
-                  <Button variant="outline" onClick={() => setIsEditing(false)}>
-                    ביטול
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ) : (
-            <Card>
-              <CardHeader>
-                <CardTitle>הגדרות חשבון</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex justify-between items-center p-4 border rounded-lg">
-                  <div>
-                    <h4 className="font-medium">התראות</h4>
-                    <p className="text-sm text-gray-600">קבל התראות על בקשות חדשות</p>
-                  </div>
-                  <Button variant="outline" size="sm">
-                    הגדר
-                  </Button>
-                </div>
-                <div className="flex justify-between items-center p-4 border rounded-lg">
-                  <div>
-                    <h4 className="font-medium">פרטיות</h4>
-                    <p className="text-sm text-gray-600">נהל את הגדרות הפרטיות שלך</p>
-                  </div>
-                  <Button variant="outline" size="sm">
-                    הגדר
-                  </Button>
-                </div>
-                <div className="flex justify-between items-center p-4 border rounded-lg">
-                  <div>
-                    <h4 className="font-medium">תשלומים</h4>
-                    <p className="text-sm text-gray-600">נהל את אמצעי התשלום</p>
-                  </div>
-                  <Button variant="outline" size="sm">
-                    הגדר
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-      </Tabs>
-    </div>
+              )}
+              <p className="text-xs text-gray-500 mt-2">הקהילה הראשית משמשת כברירת מחדל. ניתן להוסיף כמה קהילות שתרצה.</p>
+            </div>
+            
+            <div className="flex gap-4 pt-4 border-t border-gray-200/80">
+              <Button 
+                onClick={handleSave} 
+                className="flex-1 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold text-base py-6 shadow-lg hover:shadow-xl transition-shadow"
+                disabled={saving}
+              >
+                {saving ? 'שומר...' : 'שמור שינויים'}
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => setIsEditing(false)} 
+                className="flex-1 rounded-xl text-base py-6 bg-white/80 border-gray-300 hover:bg-gray-100"
+              >
+                ביטול
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {/* Avatar Display */}
+            <div className="flex justify-center mb-6">
+              <div className="w-20 h-20 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center text-4xl shadow-lg">
+                {user.avatar || '👤'}
+              </div>
+            </div>
+
+            <div className="flex justify-between items-center">
+              <span className="font-medium">שם:</span>
+              <span>{user.name}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="font-medium">טלפון:</span>
+              <span>{user.phone}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="font-medium">עיר:</span>
+              <span>{user.city}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="font-medium">כתובת:</span>
+              <span>{user.address || 'לא הוזנה'}</span>
+            </div>
+            {(user.role === 'tester' || user.isTester) && (
+              <div className="flex justify-between items-center">
+                <span className="font-medium">תפקיד:</span>
+                <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-sm font-medium">
+                  טסטר מאושר
+                </span>
+              </div>
+            )}
+            {user.role === 'admin' && (
+              <div className="flex justify-between items-center">
+                <span className="font-medium">תפקיד:</span>
+                <span className="bg-red-100 text-red-800 px-2 py-1 rounded-full text-sm font-medium">
+                  מנהל מערכת
+                </span>
+              </div>
+            )}
+            {/* Communities display */}
+            <div className="flex items-start justify-between gap-4">
+              <span className="font-medium whitespace-nowrap">קהילות:</span>
+              <div className="flex flex-wrap gap-2 justify-end">
+                {allCommunitiesToShow.length > 0 ? (
+                  allCommunitiesToShow.map((c) => (
+                    <span key={c} className="bg-blue-50 text-blue-700 border border-blue-200 px-3 py-1 rounded-full text-sm">
+                      {c}
+                    </span>
+                  ))
+                ) : (
+                  <span>לא נבחרו</span>
+                )}
+              </div>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="font-medium">דירוג:</span>
+              <span>{user.rating.toFixed(1)} ⭐</span>
+            </div>
+            
+            <Button onClick={() => setIsEditing(true)} className="w-full rounded-xl">
+              עריכת פרופיל
+            </Button>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }

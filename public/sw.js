@@ -1,12 +1,10 @@
-const CACHE_NAME = 'pick4u-v1.0.0';
-const STATIC_CACHE = 'pick4u-static-v1.0.0';
-const DYNAMIC_CACHE = 'pick4u-dynamic-v1.0.0';
+const CACHE_NAME = 'pick4u-v1.0.3';
+const STATIC_CACHE = 'pick4u-static-v1.0.3';
+const DYNAMIC_CACHE = 'pick4u-dynamic-v1.0.3';
 
 // Files to cache immediately
 const STATIC_FILES = [
-  '/',
-  '/index.html',
-  '/manifest.json',
+  // Avoid caching HTML shell to prevent stale deployments
   '/icons/icon-192x192.png',
   '/icons/icon-512x512.png'
 ];
@@ -67,42 +65,38 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  event.respondWith(
-    caches.match(request)
-      .then(cachedResponse => {
-        if (cachedResponse) {
-          console.log('[SW] Serving from cache:', request.url);
-          return cachedResponse;
-        }
-
-        console.log('[SW] Fetching from network:', request.url);
-        return fetch(request)
-          .then(networkResponse => {
-            // Don't cache non-successful responses
-            if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
-              return networkResponse;
-            }
-
-            // Cache dynamic content
-            const responseToCache = networkResponse.clone();
-            caches.open(DYNAMIC_CACHE)
-              .then(cache => {
-                cache.put(request, responseToCache);
-              });
-
-            return networkResponse;
-          })
-          .catch(error => {
-            console.error('[SW] Network fetch failed:', error);
-            
-            // Return offline page for navigation requests
-            if (request.destination === 'document') {
-              return caches.match('/index.html');
-            }
-            
-            throw error;
-          });
+  // Network-first for navigation/doc requests to ensure latest deployment
+  if (request.mode === 'navigate' || request.destination === 'document') {
+    event.respondWith(
+      fetch(request).then((response) => {
+        // Optionally update cache with fresh HTML for offline fallback
+        const copy = response.clone();
+        caches.open(DYNAMIC_CACHE).then((cache) => cache.put('/index.html', copy));
+        return response;
+      }).catch(async () => {
+        // Fallback to cached shell if offline
+        const cached = await caches.match('/index.html');
+        return cached || Response.error();
       })
+    );
+    return;
+  }
+
+  // Cache-first for same-origin static assets; dynamically cache successful responses
+  event.respondWith(
+    caches.match(request).then((cachedResponse) => {
+      if (cachedResponse) {
+        return cachedResponse;
+      }
+      return fetch(request).then((networkResponse) => {
+        if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
+          return networkResponse;
+        }
+        const responseToCache = networkResponse.clone();
+        caches.open(DYNAMIC_CACHE).then((cache) => cache.put(request, responseToCache));
+        return networkResponse;
+      });
+    })
   );
 });
 
@@ -115,7 +109,7 @@ self.addEventListener('sync', event => {
   }
 });
 
-// Push notifications
+// Push notifications (fallback for non-FCM pushes)
 self.addEventListener('push', event => {
   console.log('[SW] Push notification received');
   
@@ -176,3 +170,71 @@ self.addEventListener('message', event => {
     self.skipWaiting();
   }
 });
+
+// Ensure immediate control after activation
+self.addEventListener('activate', (event) => {
+  event.waitUntil(self.clients.claim());
+});
+
+// --- Firebase Cloud Messaging integration into this SW ---
+try {
+  importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js');
+  importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compat.js');
+
+  const firebaseConfig = {
+    apiKey: "demo-api-key",
+    authDomain: "pick4u-demo.firebaseapp.com",
+    projectId: "pick4u-demo",
+    storageBucket: "pick4u-demo.appspot.com",
+    messagingSenderId: "123456789",
+    appId: "1:123456789:web:abcdef"
+  };
+
+  // Guard initialize in case the SDK is already initialized
+  if (!self.firebase?.apps?.length) {
+    firebase.initializeApp(firebaseConfig);
+  }
+
+  const fcmMessaging = firebase.messaging();
+
+  // FCM background handler
+  fcmMessaging.onBackgroundMessage((payload) => {
+    console.log('[SW][FCM] Background message:', payload);
+
+    const notificationTitle = payload.notification?.title || 'הודעה חדשה';
+    const notificationOptions = {
+      body: payload.notification?.body,
+      icon: '/icons/icon-192x192.png',
+      badge: '/icons/icon-192x192.png',
+      tag: payload.data?.type || 'default',
+      data: payload.data,
+      actions: [
+        { action: 'open', title: 'פתח', icon: '/icons/icon-192x192.png' },
+        { action: 'close', title: 'סגור' }
+      ]
+    };
+
+    self.registration.showNotification(notificationTitle, notificationOptions);
+  });
+
+  // Delegate notification clicks for FCM as well
+  self.addEventListener('notificationclick', (event) => {
+    if (event.action === 'close') return;
+    const urlToOpen = event.notification?.data?.url || '/';
+    event.waitUntil(
+      clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+        for (const client of clientList) {
+          if (client.url.includes(self.location.origin) && 'focus' in client) {
+            return client.focus();
+          }
+        }
+        if (clients.openWindow) {
+          return clients.openWindow(urlToOpen);
+        }
+      })
+    );
+  });
+} catch (e) {
+  // If FCM scripts fail to load, continue with basic SW features
+  console.warn('[SW] FCM integration not available:', e);
+}

@@ -19,7 +19,7 @@ class LocationService {
 
   constructor() {
     this.googleMapsLoader = new Loader({
-      apiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY || 'demo-key',
+      apiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'demo-key',
       version: 'weekly',
       libraries: ['places', 'geometry']
     });

@@ -160,9 +160,9 @@ class ChatService {
   // Get user's chats
   async getUserChats(userId: string): Promise<Chat[]> {
     try {
+      // First, get all chats where the user is a participant
       const q = query(
         collection(db, this.chatsCollection),
-        where('participants', 'array-contains', { userId }),
         orderBy('updatedAt', 'desc')
       );
 
@@ -170,10 +170,15 @@ class ChatService {
       const chats: Chat[] = [];
 
       querySnapshot.forEach((doc) => {
-        chats.push({
-          id: doc.id,
-          ...doc.data()
-        } as Chat);
+        const chatData = doc.data() as Chat;
+        // Check if user is a participant in this chat
+        const isParticipant = chatData.participants.some(p => p.userId === userId);
+        if (isParticipant) {
+          chats.push({
+            id: doc.id,
+            ...chatData
+          } as Chat);
+        }
       });
 
       return chats;

@@ -1,5 +1,5 @@
 // Chat Hook
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { chatService, Chat, ChatMessage } from '../services/chatService';
 import { useAuth } from './useAuth';
 
@@ -27,7 +27,7 @@ export const useChat = (chatId?: string) => {
     return unsubscribe;
   }, [chatId]);
 
-  const sendMessage = async (message: string, messageType: ChatMessage['messageType'] = 'text', metadata?: ChatMessage['metadata']) => {
+  const sendMessage = useCallback(async (message: string, messageType: ChatMessage['messageType'] = 'text', metadata?: ChatMessage['metadata']) => {
     if (!chatId || !user || !userProfile) return;
 
     try {
@@ -44,7 +44,7 @@ export const useChat = (chatId?: string) => {
       setError('שגיאה בשליחת ההודעה');
       throw err;
     }
-  };
+  }, [chatId, user, userProfile]);
 
   const sendPriceOffer = async (priceOffer: number) => {
     if (!chatId || !user || !userProfile) return;
